@@ -1,0 +1,20 @@
+# Development files
+.git
+.gitignore
+.gitattributes
+.editorconfig
+.eleventyignore
+.nvmrc
+.nojekyll
+.DS_Store
+
+# Lock files (let consumers generate their own)
+package-lock.json
+
+# Node modules
+node_modules
+
+# Build artifacts
+_site
+dist
+tmp
