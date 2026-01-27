@@ -13,6 +13,14 @@ npm test          # No tests yet (placeholder)
 npm run admin     # Start admin server (configured in consuming project)
 ```
 
+### Publish NPM package.
+
+```bash
+npm version patch  # or minor major
+npm publish --access public
+git push && git push --tags 
+```
+
 Node 20+ required (see .nvmrc).
 
 ## Architecture
@@ -69,5 +77,4 @@ startAdminServer({
 - Admin interface has no authentication (local-only by design)
 - Requires git CLI in PATH
 - Ollama with llama3 model optional for synopsis generation
-- 50MB request limit for image uploads
-- Relies on GitHub and GitHub Actions for publishing workflow
+- 50MB request limit for image upload
