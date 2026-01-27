@@ -29,7 +29,9 @@ let currentConfig = null;
  * @param {string} [options.imageUrlPath] URL path prefix for images in final site (defaults to '/uploads')
  * @param {string} [options.previewTemplate] Path to custom preview template (relative to cmsRoot)
  * @param {number} [options.port] Server port (defaults to 3000 or PORT env var)
- * @param {Array} options.sections Array of section definitions: { id, name, folder, tag }
+ * @param {Array} options.sections Array of section definitions: { id, name, folder, tag, customFields? }
+ *   customFields is an optional array of: { id, label, type, placeholder? }
+ *   Supported types: 'text', 'textarea'
  * @param {Array} [options.imageSizes] Array of image size definitions: { suffix, width }
  * @param {Array} [options.branchWords] Array of words for git branch name generation
  * @returns {Object} Configuration object

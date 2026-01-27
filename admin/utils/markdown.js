@@ -132,6 +132,16 @@ export function buildMarkdown(fm, body) {
   if (fm.showGallery) lines.push('showGallery: true');
   if (fm.lede === true) lines.push('lede: true');
   if (fm.status) lines.push('status: ' + fm.status);
+
+  // Handle custom fields
+  if (fm.customFields && typeof fm.customFields === 'object') {
+    Object.entries(fm.customFields).forEach(([key, value]) => {
+      if (value) {
+        lines.push(key + ': "' + String(value).replace(/"/g, '\\"') + '"');
+      }
+    });
+  }
+
   lines.push('---');
   return lines.join('\n') + '\n\n' + body;
 }

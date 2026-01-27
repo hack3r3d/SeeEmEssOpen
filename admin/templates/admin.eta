@@ -303,6 +303,8 @@
           <input type="text" id="folder" placeholder="e.g., breaking-news">
         </div>
 
+        <div id="customFieldsContainer"></div>
+
         <div class="image-section">
           <label>Lead Photo (required)</label>
           <input type="hidden" id="image" value="">
@@ -505,6 +507,7 @@
     async function init() {
       await loadSections();
       await loadPosts();
+      renderCustomFields();
       newPost();
       setupDropZone();
       setupGalleryDropZone();
@@ -530,6 +533,70 @@
         tab.classList.toggle('active', sections[idx].id === sectionId);
       });
       renderPostList();
+      renderCustomFields();
+    }
+
+    function renderCustomFields() {
+      const container = document.getElementById('customFieldsContainer');
+      const section = sections.find(s => s.id === currentSection);
+      const customFields = section && section.customFields ? section.customFields : [];
+
+      if (customFields.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      container.innerHTML = customFields.map(field => {
+        const inputType = field.type === 'textarea'
+          ? '<textarea id="custom_' + field.id + '" placeholder="' + (field.placeholder || '') + '" rows="3"></textarea>'
+          : '<input type="text" id="custom_' + field.id + '" placeholder="' + (field.placeholder || '') + '">';
+        return '<div><label>' + field.label + '</label>' + inputType + '</div>';
+      }).join('');
+
+      // Set up dirty tracking for custom fields
+      customFields.forEach(field => {
+        const el = document.getElementById('custom_' + field.id);
+        if (el) {
+          el.addEventListener('input', () => markFormDirty());
+        }
+      });
+    }
+
+    function getCustomFieldsData() {
+      const section = sections.find(s => s.id === currentSection);
+      const customFields = section && section.customFields ? section.customFields : [];
+      const data = {};
+      customFields.forEach(field => {
+        const el = document.getElementById('custom_' + field.id);
+        if (el) {
+          data[field.id] = el.value;
+        }
+      });
+      return data;
+    }
+
+    function loadCustomFieldsData(post) {
+      const section = sections.find(s => s.id === currentSection);
+      const customFields = section && section.customFields ? section.customFields : [];
+      customFields.forEach(field => {
+        const el = document.getElementById('custom_' + field.id);
+        if (el) {
+          el.value = post[field.id] || '';
+        }
+      });
+    }
+
+    function clearCustomFields() {
+      const section = sections.find(s => s.id === currentSection);
+      const customFields = section && section.customFields ? section.customFields : [];
+      customFields.forEach(field => {
+        const el = document.getElementById('custom_' + field.id);
+        if (el) {
+          el.value = '';
+        }
+      });
     }
 
     function setupFormDirtyTracking() {
@@ -673,6 +740,7 @@
       images = Array.isArray(post.images) ? [...post.images] : [];
       renderGalleryThumbnails();
       syncInlineImages();
+      loadCustomFieldsData(post);
       document.getElementById('deleteBtn').style.display = 'inline-block';
       document.getElementById('publishBtn').style.display = 'inline-block';
       previewImage();
@@ -702,6 +770,8 @@
       images = [];
       renderGalleryThumbnails();
       syncInlineImages();
+      renderCustomFields();
+      clearCustomFields();
       document.querySelectorAll('.post-list li').forEach(li => li.classList.remove('active'));
       showStatus('');
       markFormClean(false);
@@ -741,7 +811,8 @@
         lede: document.getElementById('postLede').value === 'true',
         gallery: gallery,
         images: images,
-        showGallery: document.getElementById('showGallery').checked
+        showGallery: document.getElementById('showGallery').checked,
+        customFields: getCustomFieldsData()
       };
 
       btn.textContent = 'Saving...';
@@ -868,7 +939,8 @@
         lede: document.getElementById('postLede').value === 'true',
         gallery: gallery,
         images: images,
-        showGallery: document.getElementById('showGallery').checked
+        showGallery: document.getElementById('showGallery').checked,
+        customFields: getCustomFieldsData()
       };
 
       try {
