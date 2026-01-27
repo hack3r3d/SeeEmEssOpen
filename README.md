@@ -1,6 +1,6 @@
 # SeeEmEss
 
-A simple CMS framework built on [Eleventy](https://www.11ty.dev/) with an admin interface for managing blog content.
+A simple CMS framework built on [Eleventy](https://www.11ty.dev/) with an admin interface for managing blog content. It is by-design simple.
 
 ## Features
 
@@ -12,7 +12,9 @@ A simple CMS framework built on [Eleventy](https://www.11ty.dev/) with an admin 
 
 ## Caveats
 
-This is an opinionated project. It relies on GitHub. The admin interface has no authentication mechanism, so it can only run locally. Changes are published via GitHub actions.
+This is an opinionated project that is extremely limited. It relies on GitHub. The admin interface has no authentication mechanism, so it can only run locally with changes are published via GitHub actions.
+
+If you think want this SeeEmEssOpen be better, I'm happy to review pull requests.
 
 ## Installation
 
@@ -103,6 +105,17 @@ When you import `seeemess/filters`, the following Eleventy filters are added:
 - `sortAlphabetically` - Sort strings alphabetically
 - `thumbSuffix` - Add size suffix to image filenames
 - `smartQuotes` - Convert straight quotes to typographic quotes
+
+## Optional: AI Synopsis Generation
+
+The admin interface includes a "Generate Synopsis" button that uses [Ollama](https://ollama.ai/) to automatically generate post summaries.
+
+**Requirements:**
+1. Install Ollama: https://ollama.ai/download
+2. Pull the llama3 model: `ollama pull llama3`
+3. Ensure Ollama is running when using the admin
+
+If Ollama is not available, the button will show an error but the rest of the admin works normally.
 
 ## Project Structure
 
