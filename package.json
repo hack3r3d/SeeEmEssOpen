@@ -1,6 +1,6 @@
 {
 	"name": "seeemess",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "A simple CMS framework built on Eleventy with an admin interface for managing blog content.",
 	"type": "module",
 	"main": "index.js",
