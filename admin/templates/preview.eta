@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview: <%= it.title || 'Untitled' %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:wght@400;700&family=Playfair+Display+SC&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/index.css">
+  <style>
+    .preview-banner{background:#333;color:#fff;padding:0.5rem 1rem;text-align:center;font-size:0.85rem;position:sticky;top:0;z-index:100;}
+    .byline::first-letter{font-size:inherit;float:none;padding:0;line-height:inherit;}
+    .post-content>p:first-child::first-letter{font-family:var(--font-headline);font-size:4rem;float:left;line-height:0.75;padding-top:8px;padding-right:12px;font-weight:400;color:var(--ink-color);}
+    .post-image-wrapper{position:relative;display:inline-block;width:100%;}
+    .post-image-wrapper .post-image{display:block;width:100%;}
+    .image-caption,.image-credit{position:absolute;bottom:0.5rem;padding:0.25rem 0.5rem;background:rgba(40,40,40,0.85);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:0.75rem;font-style:normal;max-width:60%;line-height:1.3;}
+    .image-caption{left:0.5rem;}
+    .image-credit{right:0.5rem;text-align:right;}
+    .post-content ul{list-style:none;padding-left:1.5em;margin:1.25rem 0;}
+    .post-content ul li{position:relative;margin-bottom:0.5em;padding-left:0.25em;}
+    .post-content ul li::before{content:"✦";position:absolute;left:-1.25em;color:var(--ink-color-light);font-size:0.65em;top:0.35em;}
+    .post-content ol{padding-left:1.5em;margin:1.25rem 0;}
+    .post-content ol li{margin-bottom:0.5em;padding-left:0.25em;}
+    .post-content ul ul li::before{content:"◆";font-size:0.5em;top:0.45em;}
+    .post-content ul ul ul li::before{content:"•";font-size:0.7em;top:0.3em;}
+    .post-content img{cursor:pointer;transition:opacity 0.2s ease;}
+    .post-content img:hover{opacity:0.9;}
+    .photo-gallery{margin:2rem 0;padding:1.5rem;border-top:3px double var(--ink-color);border-bottom:3px double var(--ink-color);}
+    .gallery-title{text-align:center;font-family:var(--font-headline);letter-spacing:0.1em;text-transform:uppercase;margin:0 0 1rem 0;font-size:1rem;}
+    .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem;}
+    .gallery-item{display:block;overflow:hidden;margin:0;cursor:pointer;aspect-ratio:4/3;}
+    .gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform 0.2s;}
+    .gallery-item:hover img{transform:scale(1.05);}
+    .lightbox-image-wrapper{position:relative;display:inline-block;}
+    .lightbox-image-wrapper img{max-width:90vw;max-height:80vh;display:block;}
+    .lightbox-img-caption,.lightbox-img-credit{position:absolute;bottom:0.5rem;padding:0.25rem 0.5rem;background:rgba(40,40,40,0.85);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:0.85rem;max-width:60%;line-height:1.3;}
+    .lightbox-img-caption{left:0.5rem;}
+    .lightbox-img-credit{right:0.5rem;text-align:right;}
+  </style>
+</head>
+<body>
+  <div class="preview-banner">📄 Preview Mode - This is how your post will appear</div>
+  <main>
+    <h1><%= it.title || 'Untitled Post' %></h1>
+    <% if (it.image) { %>
+    <figure class="post-figure">
+      <div class="post-image-wrapper">
+        <img src="<%= it.imageUrlPath %>/<%= it.image %>" alt="<%= it.imageCaption || it.title || '' %>" class="post-image">
+        <% if (it.imageCaption) { %><span class="image-caption"><%= it.imageCaption %></span><% } %>
+        <% if (it.imageCredit) { %><span class="image-credit">Photo: <%= it.imageCredit %></span><% } %>
+      </div>
+      <figcaption class="post-date"><time><%= it.formattedDate %></time><%~ it.tagsHtml %></figcaption>
+    </figure>
+    <% } else { %>
+    <p class="post-date"><time><%= it.formattedDate %></time><%~ it.tagsHtml %></p>
+    <% } %>
+    <% if (it.author) { %>
+    <p class="byline"><span class="byline-author">By <%= it.author %></span></p>
+    <% } %>
+    <div class="post-content"><%~ it.htmlBody %></div>
+    <%~ it.galleryHtml %>
+    <div class="ornament-divider" aria-hidden="true"><span class="ornament-line"></span><span class="ornament-symbol">❧</span><span class="ornament-line"></span></div>
+  </main>
+
+  <% if (it.images.length > 0 || it.gallery.length > 0) { %>
+  <script id="contentImagesData" type="application/json"><%~ JSON.stringify({ images: it.images, gallery: it.gallery }) %></script>
+  <% } %>
+
+  <!-- Content Image Lightbox -->
+  <div class="lightbox-overlay" id="contentLightbox" onclick="closeContentLightbox(event)">
+    <button class="lightbox-close" onclick="closeContentLightbox(event)" aria-label="Close">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="contentLightboxPrev" onclick="navigateContentLightbox(-1, event)" aria-label="Previous">&#10094;</button>
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+      <div class="lightbox-image-wrapper">
+        <img id="contentLightboxImg" src="" alt="">
+        <span class="lightbox-img-caption" id="contentLightboxCaption"></span>
+        <span class="lightbox-img-credit" id="contentLightboxCredit"></span>
+      </div>
+      <div class="lightbox-actions">
+        <span class="lightbox-counter" id="contentLightboxCounter"></span>
+      </div>
+    </div>
+    <button class="lightbox-nav lightbox-next" id="contentLightboxNext" onclick="navigateContentLightbox(1, event)" aria-label="Next">&#10095;</button>
+  </div>
+
+  <!-- Gallery Lightbox -->
+  <div class="lightbox-overlay" id="galleryLightbox" onclick="closeGalleryLightbox(event)">
+    <button class="lightbox-close" onclick="closeGalleryLightbox(event)" aria-label="Close">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="galleryLightboxPrev" onclick="navigateGalleryLightbox(-1, event)" aria-label="Previous">&#10094;</button>
+    <div class="lightbox-content" onclick="event.stopPropagation()">
+      <div class="lightbox-image-wrapper">
+        <img id="galleryLightboxImg" src="" alt="">
+        <span class="lightbox-img-caption" id="galleryLightboxCaption"></span>
+        <span class="lightbox-img-credit" id="galleryLightboxCredit"></span>
+      </div>
+      <div class="lightbox-actions">
+        <span class="lightbox-counter" id="galleryLightboxCounter"></span>
+      </div>
+    </div>
+    <button class="lightbox-nav lightbox-next" id="galleryLightboxNext" onclick="navigateGalleryLightbox(1, event)" aria-label="Next">&#10095;</button>
+  </div>
+
+  <script>
+  (function() {
+    let contentCurrentIndex = 0;
+    let contentImages = [];
+
+    let imageMetadata = {};
+    const metaScript = document.getElementById('contentImagesData');
+    if (metaScript) {
+      try {
+        const data = JSON.parse(metaScript.textContent);
+        (data.gallery || []).forEach(item => {
+          const filename = (item.src || item).split('/').pop();
+          imageMetadata[filename] = typeof item === 'string' ? { src: item } : item;
+        });
+        (data.images || []).forEach(item => {
+          const filename = item.src.split('/').pop();
+          const existing = imageMetadata[filename] || {};
+          imageMetadata[filename] = {
+            src: item.src,
+            caption: item.caption || existing.caption || '',
+            credit: item.credit || existing.credit || ''
+          };
+        });
+      } catch (e) {}
+    }
+
+    function initContentLightbox() {
+      const postContent = document.querySelector('.post-content');
+      if (!postContent) return;
+
+      const imgs = postContent.querySelectorAll('img');
+      contentImages = Array.from(imgs).map(img => {
+        let src = img.src;
+        const fullSrc = src.replace(/-(?:400|600|800|thumb)(\.[^.]+)$/, '$1');
+        const filename = fullSrc.split('/').pop();
+        const meta = imageMetadata[filename] || {};
+        return {
+          src: fullSrc,
+          caption: meta.caption || img.alt || '',
+          credit: meta.credit || ''
+        };
+      });
+
+      imgs.forEach((img, index) => {
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', function(e) {
+          e.preventDefault();
+          openContentLightbox(index);
+        });
+      });
+    }
+
+    window.openContentLightbox = function(index) {
+      if (contentImages.length === 0) return;
+      contentCurrentIndex = index;
+      updateContentLightbox();
+      document.getElementById('contentLightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeContentLightbox = function(e) {
+      if (e && e.target !== e.currentTarget && !e.target.classList.contains('lightbox-close')) return;
+      document.getElementById('contentLightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    };
+
+    window.navigateContentLightbox = function(dir, e) {
+      if (e) e.stopPropagation();
+      contentCurrentIndex += dir;
+      if (contentCurrentIndex < 0) contentCurrentIndex = contentImages.length - 1;
+      if (contentCurrentIndex >= contentImages.length) contentCurrentIndex = 0;
+      updateContentLightbox();
+    };
+
+    function updateContentLightbox() {
+      const item = contentImages[contentCurrentIndex];
+      if (!item) return;
+      document.getElementById('contentLightboxImg').src = item.src;
+      document.getElementById('contentLightboxImg').alt = item.caption || 'Image';
+      const captionEl = document.getElementById('contentLightboxCaption');
+      const creditEl = document.getElementById('contentLightboxCredit');
+      captionEl.textContent = item.caption || '';
+      captionEl.style.display = item.caption ? 'block' : 'none';
+      creditEl.textContent = item.credit ? 'Photo: ' + item.credit : '';
+      creditEl.style.display = item.credit ? 'block' : 'none';
+      document.getElementById('contentLightboxCounter').textContent = (contentCurrentIndex + 1) + ' / ' + contentImages.length;
+      document.getElementById('contentLightboxPrev').style.display = contentImages.length > 1 ? 'flex' : 'none';
+      document.getElementById('contentLightboxNext').style.display = contentImages.length > 1 ? 'flex' : 'none';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      const lightbox = document.getElementById('contentLightbox');
+      if (!lightbox || !lightbox.classList.contains('active')) return;
+      if (e.key === 'Escape') closeContentLightbox({target: lightbox, currentTarget: lightbox});
+      if (e.key === 'ArrowLeft') navigateContentLightbox(-1);
+      if (e.key === 'ArrowRight') navigateContentLightbox(1);
+    });
+
+    initContentLightbox();
+  })();
+
+  (function() {
+    let galleryCurrentIndex = 0;
+    let galleryItems = [];
+
+    function initGalleryLightbox() {
+      const grid = document.getElementById('galleryGrid');
+      if (!grid) return;
+      galleryItems = Array.from(grid.querySelectorAll('.gallery-item')).map(el => ({
+        src: el.dataset.src,
+        caption: el.dataset.caption || '',
+        credit: el.dataset.credit || ''
+      }));
+    }
+
+    window.openGalleryLightbox = function(index) {
+      initGalleryLightbox();
+      if (galleryItems.length === 0) return;
+      galleryCurrentIndex = index;
+      updateGalleryLightbox();
+      document.getElementById('galleryLightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeGalleryLightbox = function(e) {
+      if (e && e.target !== e.currentTarget && !e.target.classList.contains('lightbox-close')) return;
+      document.getElementById('galleryLightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    };
+
+    window.navigateGalleryLightbox = function(dir, e) {
+      if (e) e.stopPropagation();
+      galleryCurrentIndex += dir;
+      if (galleryCurrentIndex < 0) galleryCurrentIndex = galleryItems.length - 1;
+      if (galleryCurrentIndex >= galleryItems.length) galleryCurrentIndex = 0;
+      updateGalleryLightbox();
+    };
+
+    function updateGalleryLightbox() {
+      const item = galleryItems[galleryCurrentIndex];
+      if (!item) return;
+      document.getElementById('galleryLightboxImg').src = item.src;
+      document.getElementById('galleryLightboxImg').alt = item.caption || 'Gallery image';
+      const captionEl = document.getElementById('galleryLightboxCaption');
+      const creditEl = document.getElementById('galleryLightboxCredit');
+      captionEl.textContent = item.caption || '';
+      captionEl.style.display = item.caption ? 'block' : 'none';
+      creditEl.textContent = item.credit ? 'Photo: ' + item.credit : '';
+      creditEl.style.display = item.credit ? 'block' : 'none';
+      document.getElementById('galleryLightboxCounter').textContent = (galleryCurrentIndex + 1) + ' / ' + galleryItems.length;
+      document.getElementById('galleryLightboxPrev').style.display = galleryItems.length > 1 ? 'flex' : 'none';
+      document.getElementById('galleryLightboxNext').style.display = galleryItems.length > 1 ? 'flex' : 'none';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      const lightbox = document.getElementById('galleryLightbox');
+      if (!lightbox || !lightbox.classList.contains('active')) return;
+      if (e.key === 'Escape') closeGalleryLightbox({target: lightbox, currentTarget: lightbox});
+      if (e.key === 'ArrowLeft') navigateGalleryLightbox(-1);
+      if (e.key === 'ArrowRight') navigateGalleryLightbox(1);
+    });
+  })();
+  </script>
+</body>
+</html>

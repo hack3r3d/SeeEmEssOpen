@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CMS Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; max-width: 1400px; margin: 0 auto; padding: 2rem; background: #f5f5f5; }
+    h1 { color: #333; border-bottom: 0px solid #333; padding-bottom: 0.5rem; margin: 0; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 3px solid #333; padding-bottom: 0.5rem; }
+    .btn-publish-global { padding: 0.6rem 1.5rem; background: #28a745; color: #fff; border: none; border-radius: 4px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+    .btn-publish-global:hover:not(:disabled) { background: #218838; }
+    .btn-publish-global:disabled { background: #ccc; color: #666; cursor: not-allowed; }
+    .container { display: grid; grid-template-columns: 280px 1fr; gap: 2rem; }
+    .sidebar { background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: fit-content; }
+    .main { background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .post-list { list-style: none; padding: 0; margin: 0; max-height: 600px; overflow-y: auto; }
+    .post-list li { padding: 0.75rem; border-bottom: 1px solid #eee; cursor: pointer; }
+    .post-list li:hover { background: #f0f0f0; }
+    .post-list li.active { background: #e0e0e0; }
+    .post-title { font-weight: 600; font-size: 0.85rem; }
+    .post-date { font-size: 0.7rem; color: #888; }
+    .post-status { font-size: 0.65rem; padding: 2px 6px; border-radius: 3px; margin-left: 5px; }
+    .post-status.draft { background: #ffeeba; color: #856404; }
+    .post-status.published { background: #d4edda; color: #155724; }
+    .post-status.lede { background: #cce5ff; color: #004085; }
+
+    .section-tabs { display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 2px solid #333; }
+    .section-tab { flex: 1; padding: 0.6rem 0.5rem; text-align: center; background: #f0f0f0; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; border-radius: 4px 4px 0 0; }
+    .section-tab:hover { background: #e0e0e0; }
+    .section-tab.active { background: #333; color: #fff; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+    .section-header h3 { margin: 0; font-size: 0.9rem; }
+    .lede-indicator { font-size: 0.7rem; color: #004085; }
+    .btn-lede { font-size: 0.65rem; padding: 2px 6px; background: #17a2b8; color: #fff; border: none; border-radius: 3px; cursor: pointer; margin-left: auto; }
+    .btn-lede:hover { background: #138496; }
+    .btn-lede.is-lede { background: #28a745; }
+    .post-row { display: flex; align-items: center; gap: 0.5rem; }
+    .post-info { flex: 1; min-width: 0; }
+    .post-actions { flex-shrink: 0; }
+
+    form { display: flex; flex-direction: column; gap: 1rem; }
+    label { font-weight: 600; color: #333; font-size: 0.9rem; }
+    input, textarea, select { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.95rem; font-family: inherit; }
+    textarea { min-height: 300px; font-family: monospace; font-size: 0.85rem; }
+
+    .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; }
+    .btn-primary { background: #333; color: #fff; }
+    .btn-danger { background: #c00; color: #fff; }
+    .btn-secondary { background: #ddd; color: #333; }
+    .btn-preview { background: #17a2b8; color: #fff; }
+    .btn-preview:hover { background: #138496; }
+    .btn-publish { background: #28a745; color: #fff; }
+    .btn-publish:hover { background: #218838; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-row { display: flex; justify-content: space-between; margin-top: 1rem; }
+    .btn-group { display: flex; gap: 0.5rem; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+    .image-section { border: 2px dashed #ddd; padding: 1rem; border-radius: 8px; }
+    .image-preview-large { max-width: 100%; max-height: 200px; margin-top: 0.5rem; border: 1px solid #ddd; }
+    .image-upload-area { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+    .image-upload-area > div { flex: 1; min-width: 200px; }
+    
+    .drop-zone { border: 2px dashed #ccc; padding: 2rem; text-align: center; cursor: pointer; border-radius: 4px; margin-top: 0.5rem; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: #28a745; background: #f0fff0; }
+    .drop-zone input { display: none; }
+
+    .gallery-thumbnails { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+    .gallery-thumb { position: relative; width: 120px; }
+    .gallery-thumb img { width: 120px; height: 90px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
+    .gallery-thumb-actions { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
+    .gallery-thumb-btn { width: 24px; height: 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+    .gallery-thumb-btn.copy { background: #007bff; color: #fff; }
+    .gallery-thumb-btn.copy:hover { background: #0056b3; }
+    .gallery-thumb-btn.remove { background: #dc3545; color: #fff; }
+    .gallery-thumb-btn.remove:hover { background: #c82333; }
+    .gallery-thumb-name { font-size: 0.7rem; color: #666; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gallery-thumb { cursor: grab; }
+    .gallery-thumb.dragging { opacity: 0.5; cursor: grabbing; }
+    .gallery-thumb.drag-over { outline: 2px dashed #007bff; outline-offset: 2px; }
+    .gallery-thumb.has-metadata::after { content: '✓'; position: absolute; bottom: 22px; left: 4px; background: #28a745; color: #fff; font-size: 10px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .gallery-thumb-btn.edit { background: #6c757d; color: #fff; }
+    .gallery-thumb-btn.edit:hover { background: #5a6268; }
+    .drop-zone input { display: none; }
+
+    .gallery-modal-fields { display: flex; flex-direction: column; gap: 1rem; }
+    .gallery-modal-fields label { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.25rem; }
+    .gallery-modal-fields input { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; }
+    .gallery-modal-fields .char-count { font-size: 0.75rem; color: #888; text-align: right; }
+
+    .status { padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; display: none; }
+    .status.success { background: #d4edda; color: #155724; display: block; }
+    .status.error { background: #f8d7da; color: #721c24; display: block; }
+    .status.info { background: #cce5ff; color: #004085; display: block; }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 420px;
+      width: 90%;
+      transform: scale(0.9);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.active .modal-box {
+      transform: scale(1);
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .modal-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+    .modal-icon.warning { background: #fff3cd; }
+    .modal-icon.danger { background: #f8d7da; }
+    .modal-icon.success { background: #d4edda; }
+    .modal-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #333;
+    }
+    .modal-body {
+      padding: 1.25rem 1.5rem;
+      color: #555;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+    .modal-btn {
+      padding: 0.6rem 1.25rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .modal-btn-cancel {
+      background: #e9ecef;
+      color: #495057;
+    }
+    .modal-btn-cancel:hover {
+      background: #dee2e6;
+    }
+    .modal-btn-danger {
+      background: #dc3545;
+      color: #fff;
+    }
+    .modal-btn-danger:hover {
+      background: #c82333;
+    }
+    .modal-btn-success {
+      background: #28a745;
+      color: #fff;
+    }
+    .modal-btn-success:hover {
+      background: #218838;
+    }
+
+    /* Preview Modal */
+    .preview-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 2000;
+      display: none;
+    }
+    .preview-modal.active {
+      display: flex;
+      flex-direction: column;
+    }
+    .preview-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: #222;
+      color: #fff;
+    }
+    .preview-modal-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .preview-modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #444;
+      color: #fff;
+      font-size: 1.25rem;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .preview-modal-close:hover {
+      background: #666;
+    }
+    .preview-modal-iframe {
+      flex: 1;
+      border: none;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-row">
+    <h1>CMS Admin</h1>
+    <button class="btn-publish-global" id="publishGlobalBtn" disabled onclick="publishChanges()">Publish Changes</button>
+  </div>
+  <div class="container">
+    <div class="sidebar">
+      <button class="btn btn-primary" style="width:100%; margin-bottom:1rem;" onclick="newPost()">+ New Post</button>
+      <div class="section-tabs" id="sectionTabs"></div>
+      <div class="section-header">
+        <h3 id="sectionTitle">Posts</h3>
+        <span class="lede-indicator" id="ledeIndicator"></span>
+      </div>
+      <ul class="post-list" id="postList"></ul>
+    </div>
+    <div class="main">
+      <div id="status" class="status"></div>
+      <form id="postForm" onsubmit="savePost(event)">
+        <input type="hidden" id="postPath" value="">
+        <input type="hidden" id="postStatus" value="draft">
+        <input type="hidden" id="postLede" value="false">
+        
+        <div>
+          <label>Title</label>
+          <input type="text" id="title" required>
+        </div>
+        
+        <div>
+          <label>Synopsis</label>
+          <div style="display: flex; gap: 0.5rem; align-items: flex-start;">
+            <textarea id="synopsis" rows="2" style="flex: 1; resize: vertical; min-height: 4.75em;"></textarea>
+            <button type="button" class="btn btn-secondary" onclick="generateSynopsis()" id="generateBtn" title="Generate synopsis using Ollama">✨ Generate</button>
+          </div>
+        </div>
+        
+        <div class="field-row-3">
+          <div>
+            <label>Tags (comma-separated)</label>
+            <input type="text" id="tags" placeholder="politics, local">
+          </div>
+          <div>
+            <label>Author (optional)</label>
+            <input type="text" id="author" placeholder="e.g., Jane Doe">
+          </div>
+          <div>
+            <label>Date & Time</label>
+            <input type="datetime-local" id="date">
+          </div>
+        </div>
+
+        <div>
+          <label>Folder (optional)</label>
+          <input type="text" id="folder" placeholder="e.g., breaking-news">
+        </div>
+
+        <div class="image-section">
+          <label>Lead Photo (required)</label>
+          <input type="hidden" id="image" value="">
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            Drop image here or click to upload
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+          </div>
+          <img id="imagePreview" class="image-preview-large" style="display:none;">
+          <div class="lead-photo-fields" id="leadPhotoFields" style="display:none; margin-top: 0.75rem;">
+            <div class="field-row">
+              <div>
+                <label style="font-size: 0.8rem;">Caption</label>
+                <input type="text" id="imageCaption" placeholder="Describe the image..." maxlength="255">
+              </div>
+              <div>
+                <label style="font-size: 0.8rem;">Photo Credit</label>
+                <input type="text" id="imageCredit" placeholder="Photographer or source..." maxlength="255">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="image-section">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label>Photo Gallery (optional)</label>
+            <label style="font-weight: normal; font-size: 0.85rem;">
+              <input type="checkbox" id="showGallery"> Show gallery at bottom of post
+            </label>
+          </div>
+          <div class="gallery-upload-area">
+            <div class="drop-zone" id="galleryDropZone" onclick="document.getElementById('galleryFileInput').click()">
+              Drop images here or click to upload to gallery
+              <input type="file" id="galleryFileInput" accept="image/*" multiple onchange="handleGalleryFileSelect(event)">
+            </div>
+          </div>
+          <div id="galleryThumbnails" class="gallery-thumbnails"></div>
+        </div>
+
+        <div>
+          <label>Content (Markdown)</label>
+          <textarea id="body" required></textarea>
+        </div>
+
+        <div class="image-section" id="inlineImagesSection" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label>Inline Image Captions &amp; Credits</label>
+            <button type="button" class="btn btn-secondary" onclick="syncInlineImages()" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Refresh</button>
+          </div>
+          <p style="font-size: 0.85rem; color: #666; margin: 0.25rem 0 0.5rem;">Add captions and credits for images in your content</p>
+          <div id="inlineImagesList" class="gallery-thumbnails"></div>
+        </div>
+
+        <div class="btn-row">
+          <div class="btn-group">
+            <button type="submit" class="btn btn-primary" id="saveBtn" disabled>Save Draft</button>
+            <button type="button" class="btn btn-preview" onclick="previewPost()">Preview</button>
+            <button type="button" class="btn btn-danger" onclick="deletePost()" id="deleteBtn" style="display:none;">Delete</button>
+            <button type="button" class="btn btn-secondary" onclick="cancelPost()">Cancel</button>
+          </div>
+          <button type="button" class="btn btn-publish" onclick="publishPost()" id="publishBtn" style="display:none;">Publish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Custom Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-icon" id="modalIcon"></div>
+        <div class="modal-title" id="modalTitle"></div>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-cancel" id="modalCancel">Cancel</button>
+        <button class="modal-btn" id="modalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="preview-modal" id="previewModal">
+    <div class="preview-modal-header">
+      <div class="preview-modal-title">📄 Preview Mode</div>
+      <button class="preview-modal-close" onclick="closePreviewModal()" title="Close preview">&times;</button>
+    </div>
+    <iframe class="preview-modal-iframe" id="previewIframe"></iframe>
+  </div>
+
+  <!-- Gallery Edit Modal -->
+  <div class="modal-overlay" id="galleryEditModal">
+    <div class="modal-box" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-icon" style="background: #e3f2fd;">📷</div>
+        <div class="modal-title">Edit Photo Details</div>
+      </div>
+      <div class="modal-body">
+        <div class="gallery-modal-fields">
+          <div>
+            <label for="galleryCaption">Caption</label>
+            <input type="text" id="galleryCaption" maxlength="255" placeholder="Describe the image...">
+            <div class="char-count"><span id="captionCount">0</span>/255</div>
+          </div>
+          <div>
+            <label for="galleryCredit">Photo Credit</label>
+            <input type="text" id="galleryCredit" maxlength="255" placeholder="Photographer or source...">
+            <div class="char-count"><span id="creditCount">0</span>/255</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-cancel" onclick="closeGalleryEditModal()">Cancel</button>
+        <button class="modal-btn modal-btn-success" onclick="saveGalleryEdit()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const imageUrlPath = '<%= it.imageUrlPath || "/uploads" %>';
+    let posts = [], gallery = [], images = [], sections = [];
+    let modalResolve = null;
+    let formDirty = false;
+    let editingGalleryIndex = null;
+    let editingImageIndex = null;
+    let currentSection = 'news';
+    let pendingChanges = false;
+
+    function markPendingChanges() {
+      pendingChanges = true;
+      const btn = document.getElementById('publishGlobalBtn');
+      btn.disabled = false;
+      btn.textContent = 'Publish Changes';
+    }
+
+    function clearPendingChanges() {
+      pendingChanges = false;
+      const btn = document.getElementById('publishGlobalBtn');
+      btn.disabled = true;
+      btn.textContent = 'Publish Changes';
+    }
+
+    function showModal(options) {
+      return new Promise((resolve) => {
+        modalResolve = resolve;
+        const modal = document.getElementById('modal');
+        const icon = document.getElementById('modalIcon');
+        const title = document.getElementById('modalTitle');
+        const body = document.getElementById('modalBody');
+        const confirmBtn = document.getElementById('modalConfirm');
+        const cancelBtn = document.getElementById('modalCancel');
+
+        // Set icon based on type
+        icon.className = 'modal-icon ' + (options.type || 'warning');
+        if (options.type === 'danger') {
+          icon.innerHTML = '&#128465;'; // trash icon
+        } else if (options.type === 'success') {
+          icon.innerHTML = '&#128640;'; // rocket icon
+        } else {
+          icon.innerHTML = '&#9888;'; // warning icon
+        }
+
+        title.textContent = options.title || 'Confirm';
+        body.textContent = options.message || 'Are you sure?';
+
+        // Set confirm button style based on type
+        confirmBtn.className = 'modal-btn ' + (options.type === 'danger' ? 'modal-btn-danger' : 'modal-btn-success');
+        confirmBtn.textContent = options.confirmText || 'Confirm';
+        cancelBtn.textContent = options.cancelText || 'Cancel';
+
+        modal.classList.add('active');
+        confirmBtn.focus();
+      });
+    }
+
+    function closeModal(result) {
+      const modal = document.getElementById('modal');
+      modal.classList.remove('active');
+      if (modalResolve) {
+        modalResolve(result);
+        modalResolve = null;
+      }
+    }
+
+    // Set up modal event listeners
+    document.getElementById('modalConfirm').onclick = () => closeModal(true);
+    document.getElementById('modalCancel').onclick = () => closeModal(false);
+    document.getElementById('modal').onclick = (e) => {
+      if (e.target.id === 'modal') closeModal(false);
+    };
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('previewModal').classList.contains('active')) {
+          closePreviewModal();
+        } else if (document.getElementById('modal').classList.contains('active')) {
+          closeModal(false);
+        }
+      }
+    });
+
+    async function init() {
+      await loadSections();
+      await loadPosts();
+      newPost();
+      setupDropZone();
+      setupGalleryDropZone();
+      setupFormDirtyTracking();
+    }
+
+    async function loadSections() {
+      sections = await (await fetch('/api/sections')).json();
+      const tabsContainer = document.getElementById('sectionTabs');
+      tabsContainer.innerHTML = '';
+      sections.forEach(s => {
+        const tab = document.createElement('button');
+        tab.className = 'section-tab' + (s.id === currentSection ? ' active' : '');
+        tab.textContent = s.name;
+        tab.onclick = () => switchSection(s.id);
+        tabsContainer.appendChild(tab);
+      });
+    }
+
+    function switchSection(sectionId) {
+      currentSection = sectionId;
+      document.querySelectorAll('.section-tab').forEach((tab, idx) => {
+        tab.classList.toggle('active', sections[idx].id === sectionId);
+      });
+      renderPostList();
+    }
+
+    function setupFormDirtyTracking() {
+      const form = document.getElementById('postForm');
+      const inputs = form.querySelectorAll('input, textarea, select');
+      inputs.forEach(input => {
+        input.addEventListener('input', () => markFormDirty());
+        input.addEventListener('change', () => markFormDirty());
+        // Auto-convert smart quotes on paste
+        if (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA') {
+          input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            const cleaned = text
+              .replace(/[\u201C\u201D]/g, '"')  // " " → "
+              .replace(/[\u2018\u2019]/g, "'"); // ' ' → '
+            document.execCommand('insertText', false, cleaned);
+          });
+        }
+      });
+    }
+
+    function markFormDirty() {
+      formDirty = true;
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = false;
+      btn.textContent = 'Save Draft';
+    }
+
+    function markFormClean(saved = false) {
+      formDirty = false;
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.textContent = saved ? 'Saved' : 'Save Draft';
+    }
+
+    async function loadPosts() {
+      posts = await (await fetch('/api/posts')).json();
+      renderPostList();
+    }
+
+    function renderPostList() {
+      const list = document.getElementById('postList');
+      list.innerHTML = '';
+
+      // Filter posts by current section
+      const sectionPosts = posts.filter(p => p.section === currentSection);
+
+      // Find current lede
+      const ledePost = sectionPosts.find(p => p.lede === true || p.lede === 'true');
+      const ledeIndicator = document.getElementById('ledeIndicator');
+      if (ledePost) {
+        ledeIndicator.textContent = 'Lead: ' + (ledePost.title || '').substring(0, 20) + (ledePost.title && ledePost.title.length > 20 ? '...' : '');
+      } else {
+        ledeIndicator.textContent = 'Lead: Most recent';
+      }
+
+      // Update section title
+      const section = sections.find(s => s.id === currentSection);
+      document.getElementById('sectionTitle').textContent = section ? section.name : 'Posts';
+
+      sectionPosts.forEach(p => {
+        const li = document.createElement('li');
+        li.dataset.path = p.path;
+
+        const statusClass = p.status === 'published' ? 'published' : 'draft';
+        const statusLabel = p.status === 'published' ? 'Published' : 'Draft';
+        const isLede = p.lede === true || p.lede === 'true';
+
+        li.innerHTML = '<div class="post-row">' +
+          '<div class="post-info" onclick="loadPost(\'' + p.path.replace(/'/g, "\\'") + '\')">' +
+            '<div class="post-title">' + (p.title || p.path) +
+              '<span class="post-status ' + statusClass + '">' + statusLabel + '</span>' +
+              (isLede ? '<span class="post-status lede">Lead</span>' : '') +
+            '</div>' +
+            '<div class="post-date">' + (p.date || '') + '</div>' +
+          '</div>' +
+          '<div class="post-actions">' +
+            '<button class="btn-lede' + (isLede ? ' is-lede' : '') + '" onclick="event.stopPropagation(); setAsLede(\'' + p.path.replace(/'/g, "\\'") + '\')" title="' + (isLede ? 'Currently lead story' : 'Set as lead story') + '">' +
+              (isLede ? '★ Lead' : '☆ Set Lead') +
+            '</button>' +
+          '</div>' +
+        '</div>';
+
+        li.querySelector('.post-info').onclick = () => loadPost(p.path);
+        list.appendChild(li);
+      });
+    }
+
+    async function setAsLede(path) {
+      const confirmed = await showModal({
+        type: 'success',
+        title: 'Set Lead Story',
+        message: 'This will make this post the lead story for this section. The previous lead story (if any) will be demoted. Remember to Publish Changes when done.',
+        confirmText: 'Set as Lead',
+        cancelText: 'Cancel'
+      });
+
+      if (!confirmed) return;
+
+      showStatus('Setting lead story...', 'info');
+      try {
+        const res = await fetch('/api/posts/set-lede/' + path, { method: 'POST' });
+        const result = await res.json();
+        if (result.success) {
+          showStatus('Lead story updated! Click "Publish Changes" to push to live site.', 'success');
+          markPendingChanges();
+          await loadPosts();
+        } else {
+          showStatus('Error: ' + result.error, 'error');
+        }
+      } catch (err) {
+        showStatus('Error: ' + err.message, 'error');
+      }
+    }
+
+    async function loadPost(path) {
+      const post = await (await fetch('/api/posts/' + path)).json();
+      document.getElementById('postPath').value = path;
+      document.getElementById('postStatus').value = post.status || 'draft';
+      document.getElementById('postLede').value = post.lede === true || post.lede === 'true' ? 'true' : 'false';
+      document.getElementById('title').value = post.title || '';
+      document.getElementById('synopsis').value = post.synopsis || '';
+      document.getElementById('tags').value = Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || '');
+      document.getElementById('author').value = post.author || '';
+      // Handle both date-only (YYYY-MM-DD) and datetime (YYYY-MM-DDTHH:MM) formats
+      let dateVal = post.date || '';
+      if (dateVal && dateVal.length === 10) {
+        dateVal = dateVal + 'T12:00'; // Add noon time for date-only values
+      }
+      document.getElementById('date').value = dateVal;
+      document.getElementById('image').value = post.image || '';
+      document.getElementById('imageCaption').value = post.imageCaption || '';
+      document.getElementById('imageCredit').value = post.imageCredit || '';
+      // Extract folder from path (e.g., 'heroes/alex-pretti.md' -> 'heroes')
+      const pathParts = path.split('/');
+      document.getElementById('folder').value = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : '';
+      document.getElementById('body').value = post.body || '';
+      document.getElementById('showGallery').checked = post.showGallery === true || post.showGallery === 'true';
+      gallery = Array.isArray(post.gallery) ? [...post.gallery] : [];
+      images = Array.isArray(post.images) ? [...post.images] : [];
+      renderGalleryThumbnails();
+      syncInlineImages();
+      document.getElementById('deleteBtn').style.display = 'inline-block';
+      document.getElementById('publishBtn').style.display = 'inline-block';
+      previewImage();
+      document.querySelectorAll('.post-list li').forEach(li => li.classList.toggle('active', li.dataset.path === path));
+      showStatus('');
+      markFormClean(false);
+    }
+
+    function newPost() {
+      document.getElementById('postPath').value = '';
+      document.getElementById('postStatus').value = 'draft';
+      document.getElementById('postLede').value = 'false';
+      document.getElementById('postForm').reset();
+      // Set current date and time (format: YYYY-MM-DDTHH:MM)
+      const now = new Date();
+      document.getElementById('date').value = now.toISOString().slice(0, 16);
+      // Set default folder based on current section
+      const section = sections.find(s => s.id === currentSection);
+      document.getElementById('folder').value = section ? section.folder : '';
+      document.getElementById('deleteBtn').style.display = 'none';
+      document.getElementById('publishBtn').style.display = 'none';
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('leadPhotoFields').style.display = 'none';
+      document.getElementById('imageCaption').value = '';
+      document.getElementById('imageCredit').value = '';
+      gallery = [];
+      images = [];
+      renderGalleryThumbnails();
+      syncInlineImages();
+      document.querySelectorAll('.post-list li').forEach(li => li.classList.remove('active'));
+      showStatus('');
+      markFormClean(false);
+    }
+
+    async function cancelPost() {
+      if (formDirty) {
+        const confirmed = await showModal({
+          type: 'warning',
+          title: 'Discard Changes',
+          message: 'You have unsaved changes. Are you sure you want to discard them?',
+          confirmText: 'Discard',
+          cancelText: 'Keep Editing'
+        });
+        if (!confirmed) return;
+      }
+      newPost();
+    }
+
+    async function savePost(e) {
+      e.preventDefault();
+      syncInlineImages();
+      const btn = document.getElementById('saveBtn');
+      const path = document.getElementById('postPath').value;
+      const data = {
+        title: document.getElementById('title').value,
+        synopsis: document.getElementById('synopsis').value,
+        tags: document.getElementById('tags').value,
+        author: document.getElementById('author').value,
+        date: document.getElementById('date').value,
+        image: document.getElementById('image').value,
+        imageCaption: document.getElementById('imageCaption').value,
+        imageCredit: document.getElementById('imageCredit').value,
+        folder: document.getElementById('folder').value,
+        body: document.getElementById('body').value,
+        status: document.getElementById('postStatus').value,
+        lede: document.getElementById('postLede').value === 'true',
+        gallery: gallery,
+        images: images,
+        showGallery: document.getElementById('showGallery').checked
+      };
+
+      btn.textContent = 'Saving...';
+      btn.disabled = true;
+
+      try {
+        const res = path
+          ? await fetch('/api/posts/' + path, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+          : await fetch('/api/posts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        const result = await res.json();
+        if (result.success) {
+          showStatus('Draft saved!', 'success');
+          markFormClean(true);
+          await loadPosts();
+          if (result.path) loadPost(result.path);
+        } else {
+          showStatus('Error: ' + (result.error || 'Unknown'), 'error');
+          btn.textContent = 'Save Draft';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        showStatus('Error: ' + err.message, 'error');
+        btn.textContent = 'Save Draft';
+        btn.disabled = false;
+      }
+    }
+
+    async function deletePost() {
+      const path = document.getElementById('postPath').value;
+      if (!path) return;
+
+      const confirmed = await showModal({
+        type: 'danger',
+        title: 'Delete Post',
+        message: 'Are you sure you want to delete this post? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+      });
+
+      if (!confirmed) return;
+
+      await fetch('/api/posts/' + path, { method: 'DELETE' });
+      showStatus('Post deleted', 'success');
+      await loadPosts();
+      newPost();
+    }
+
+    async function previewPost() {
+      syncInlineImages();
+      const data = {
+        title: document.getElementById('title').value,
+        synopsis: document.getElementById('synopsis').value,
+        tags: document.getElementById('tags').value,
+        author: document.getElementById('author').value,
+        date: document.getElementById('date').value,
+        image: document.getElementById('image').value,
+        imageCaption: document.getElementById('imageCaption').value,
+        imageCredit: document.getElementById('imageCredit').value,
+        body: document.getElementById('body').value,
+        gallery: JSON.stringify(gallery),
+        images: JSON.stringify(images),
+        showGallery: document.getElementById('showGallery').checked
+      };
+
+      try {
+        const res = await fetch('/api/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(data).toString()
+        });
+        const html = await res.text();
+
+        const iframe = document.getElementById('previewIframe');
+        iframe.srcdoc = html;
+        document.getElementById('previewModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+      } catch (err) {
+        showStatus('Preview error: ' + err.message, 'error');
+      }
+    }
+
+    function closePreviewModal() {
+      document.getElementById('previewModal').classList.remove('active');
+      document.getElementById('previewIframe').srcdoc = '';
+      document.body.style.overflow = '';
+    }
+
+    async function publishPost() {
+      let path = document.getElementById('postPath').value;
+
+      const image = document.getElementById('image').value;
+      if (!image) {
+        showStatus('Lead photo is required to publish', 'error');
+        return;
+      }
+
+      const confirmed = await showModal({
+        type: 'success',
+        title: 'Publish Post',
+        message: 'This will save and commit the post to git and push to main. The changes will be deployed to the live site.',
+        confirmText: 'Publish',
+        cancelText: 'Cancel'
+      });
+
+      if (!confirmed) return;
+
+      showStatus('Saving...', 'info');
+      document.getElementById('publishBtn').disabled = true;
+      syncInlineImages();
+
+      // Save the post first (whether new or existing)
+      const data = {
+        title: document.getElementById('title').value,
+        synopsis: document.getElementById('synopsis').value,
+        tags: document.getElementById('tags').value,
+        author: document.getElementById('author').value,
+        date: document.getElementById('date').value,
+        image: document.getElementById('image').value,
+        imageCaption: document.getElementById('imageCaption').value,
+        imageCredit: document.getElementById('imageCredit').value,
+        folder: document.getElementById('folder').value,
+        body: document.getElementById('body').value,
+        status: document.getElementById('postStatus').value,
+        lede: document.getElementById('postLede').value === 'true',
+        gallery: gallery,
+        images: images,
+        showGallery: document.getElementById('showGallery').checked
+      };
+
+      try {
+        const saveRes = path
+          ? await fetch('/api/posts/' + path, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+          : await fetch('/api/posts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        const saveResult = await saveRes.json();
+
+        if (!saveResult.success) {
+          showStatus('Error saving: ' + (saveResult.error || 'Unknown'), 'error');
+          document.getElementById('publishBtn').disabled = false;
+          return;
+        }
+
+        // If new post, get the path
+        if (saveResult.path) {
+          path = saveResult.path;
+          document.getElementById('postPath').value = path;
+        }
+
+        markFormClean(true);
+      } catch (err) {
+        showStatus('Error saving: ' + err.message, 'error');
+        document.getElementById('publishBtn').disabled = false;
+        return;
+      }
+
+      showStatus('Publishing...', 'info');
+
+      try {
+        const res = await fetch('/api/publish/' + path, { method: 'POST' });
+        const result = await res.json();
+        if (result.success) {
+          showStatus('Published! Branch: ' + result.branch + ' merged to main and pushed.', 'success');
+          document.getElementById('postStatus').value = 'published';
+          await loadPosts();
+        } else {
+          showStatus('Publish error: ' + result.error, 'error');
+        }
+      } catch (err) {
+        showStatus('Publish error: ' + err.message, 'error');
+      }
+      document.getElementById('publishBtn').disabled = false;
+    }
+
+    function previewImage() {
+      const img = document.getElementById('image').value;
+      const preview = document.getElementById('imagePreview');
+      const fields = document.getElementById('leadPhotoFields');
+      if (img) {
+        preview.src = imageUrlPath + '/' + img;
+        preview.style.display = 'block';
+        fields.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+        fields.style.display = 'none';
+      }
+    }
+
+    function setupDropZone() {
+      const dropZone = document.getElementById('dropZone');
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
+      });
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.add('dragover'));
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.remove('dragover'));
+      });
+      dropZone.addEventListener('drop', e => {
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) uploadFile(file);
+      });
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) uploadFile(file);
+    }
+
+    async function uploadFile(file) {
+      showStatus('Uploading and generating sizes...', 'info');
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const res = await fetch('/api/images', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, data: e.target.result })
+          });
+          const result = await res.json();
+          if (result.success) {
+            const sizeInfo = result.sizes ? ' (' + result.sizes.length + ' sizes: ' + result.sizes.join(', ') + ')' : '';
+            showStatus('Image uploaded: ' + result.filename + sizeInfo, 'success');
+            document.getElementById('image').value = result.filename;
+            previewImage();
+          } else {
+            showStatus('Upload error: ' + result.error, 'error');
+          }
+        } catch (err) {
+          showStatus('Upload error: ' + err.message, 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Gallery functions
+    function handleGalleryFileSelect(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => uploadGalleryFile(file));
+    }
+
+    async function uploadGalleryFile(file) {
+      showStatus('Uploading gallery image...', 'info');
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const res = await fetch('/api/images', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: file.name, data: e.target.result })
+          });
+          const result = await res.json();
+          if (result.success) {
+            gallery.push({ src: result.filename, caption: '', credit: '' });
+            renderGalleryThumbnails();
+            markFormDirty();
+            showStatus('Gallery image uploaded: ' + result.filename, 'success');
+          } else {
+            showStatus('Upload error: ' + result.error, 'error');
+          }
+        } catch (err) {
+          showStatus('Upload error: ' + err.message, 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    let draggedIndex = null;
+
+    function renderGalleryThumbnails() {
+      const container = document.getElementById('galleryThumbnails');
+      container.innerHTML = '';
+      gallery.forEach((item, idx) => {
+        // Handle both old string format and new object format
+        const img = typeof item === 'string' ? item : item.src;
+        const hasMetadata = typeof item === 'object' && (item.caption || item.credit);
+        const thumb = document.createElement('div');
+        thumb.className = 'gallery-thumb' + (hasMetadata ? ' has-metadata' : '');
+        thumb.draggable = true;
+        thumb.dataset.index = idx;
+        thumb.innerHTML =
+          '<img src="' + imageUrlPath + '/' + img + '" alt="' + img + '">' +
+          '<div class="gallery-thumb-actions">' +
+            '<button type="button" class="gallery-thumb-btn edit" onclick="openGalleryEditModal(' + idx + ')" title="Edit caption/credit">✎</button>' +
+            '<button type="button" class="gallery-thumb-btn copy" onclick="copyImageMarkdown(&#39;' + img + '&#39;)" title="Copy markdown">📋</button>' +
+            '<button type="button" class="gallery-thumb-btn remove" onclick="removeFromGallery(' + idx + ')" title="Remove from gallery">✕</button>' +
+          '</div>' +
+          '<div class="gallery-thumb-name">' + img + '</div>';
+
+        thumb.addEventListener('dragstart', (e) => {
+          draggedIndex = idx;
+          thumb.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        thumb.addEventListener('dragend', () => {
+          thumb.classList.remove('dragging');
+          draggedIndex = null;
+          document.querySelectorAll('.gallery-thumb').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        thumb.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (draggedIndex !== null && draggedIndex !== idx) {
+            thumb.classList.add('drag-over');
+          }
+        });
+
+        thumb.addEventListener('dragleave', () => {
+          thumb.classList.remove('drag-over');
+        });
+
+        thumb.addEventListener('drop', (e) => {
+          e.preventDefault();
+          thumb.classList.remove('drag-over');
+          if (draggedIndex !== null && draggedIndex !== idx) {
+            const item = gallery.splice(draggedIndex, 1)[0];
+            gallery.splice(idx, 0, item);
+            renderGalleryThumbnails();
+            markFormDirty();
+          }
+        });
+
+        container.appendChild(thumb);
+      });
+    }
+
+    function copyImageMarkdown(filename) {
+      const markdown = '![Image](' + imageUrlPath + '/' + filename + ')';
+      navigator.clipboard.writeText(markdown).then(() => {
+        showStatus('Copied: ' + markdown, 'success');
+      }).catch(err => {
+        showStatus('Failed to copy: ' + err.message, 'error');
+      });
+    }
+
+    // Inline Images functions
+    function syncInlineImages() {
+      const body = document.getElementById('body').value;
+      // Match markdown images: ![alt](src) - extract the src (handles attrs like {.class})
+      const imgRegex = /!\[[^\]]*\]\(([^)\s]+)\)(?:\{[^}]*\})?/g;
+      const foundImages = [];
+      let match;
+      // Strip imageUrlPath prefix to get just the filename
+      const urlPrefix = imageUrlPath.replace(/^\//, '') + '/';
+      while ((match = imgRegex.exec(body)) !== null) {
+        let src = match[1].replace(/^\//, ''); // Remove leading slash
+        // Strip the imageUrlPath prefix if present (e.g., "img/" from "/img/file.jpg")
+        if (src.startsWith(urlPrefix)) {
+          src = src.slice(urlPrefix.length);
+        }
+        // Also handle /uploads/ prefix for backwards compatibility
+        if (src.startsWith('uploads/')) {
+          src = src.slice(8);
+        }
+        // Skip size variants (-400, -600, -800)
+        if (/-(?:400|600|800)\.[^.]+$/.test(src)) continue;
+        foundImages.push(src);
+      }
+
+      // Update images array: keep existing metadata, add new images, remove missing
+      const newImages = [];
+      foundImages.forEach(src => {
+        const existing = images.find(img => img.src === src);
+        if (existing) {
+          newImages.push(existing);
+        } else {
+          newImages.push({ src, caption: '', credit: '' });
+        }
+      });
+      images = newImages;
+      renderInlineImages();
+    }
+
+    function renderInlineImages() {
+      const container = document.getElementById('inlineImagesList');
+      const section = document.getElementById('inlineImagesSection');
+
+      if (images.length === 0) {
+        section.style.display = 'none';
+        container.innerHTML = '';
+        return;
+      }
+
+      section.style.display = 'block';
+      container.innerHTML = '';
+
+      images.forEach((item, idx) => {
+        const hasMetadata = item.caption || item.credit;
+        const thumb = document.createElement('div');
+        thumb.className = 'gallery-thumb' + (hasMetadata ? ' has-metadata' : '');
+
+        thumb.innerHTML =
+          '<img src="' + imageUrlPath + '/' + item.src.replace(/(\.[^.]+)$/, '-thumb$1') + '" alt="" onerror="this.onerror=null; this.src=\'' + imageUrlPath + '/' + item.src + '\'">' +
+          '<div class="gallery-thumb-actions">' +
+            '<button type="button" class="gallery-thumb-btn edit" onclick="openInlineImageEditModal(' + idx + ')" title="Edit caption/credit">✎</button>' +
+          '</div>' +
+          '<div class="gallery-thumb-name">' + item.src + '</div>';
+
+        container.appendChild(thumb);
+      });
+    }
+
+    function openInlineImageEditModal(idx) {
+      editingImageIndex = idx;
+      const item = images[idx];
+
+      document.getElementById('galleryCaption').value = item.caption || '';
+      document.getElementById('galleryCredit').value = item.credit || '';
+      document.getElementById('captionCount').textContent = (item.caption || '').length;
+      document.getElementById('creditCount').textContent = (item.credit || '').length;
+
+      // Update modal title to indicate inline image
+      document.querySelector('#galleryEditModal .modal-title').textContent = 'Edit Inline Image Details';
+      document.getElementById('galleryEditModal').classList.add('active');
+    }
+
+    function closeInlineImageEditModal() {
+      document.getElementById('galleryEditModal').classList.remove('active');
+      editingImageIndex = null;
+      // Restore modal title
+      document.querySelector('#galleryEditModal .modal-title').textContent = 'Edit Photo Details';
+    }
+
+    function saveInlineImageEdit() {
+      if (editingImageIndex === null) return;
+
+      const caption = document.getElementById('galleryCaption').value.trim();
+      const credit = document.getElementById('galleryCredit').value.trim();
+
+      images[editingImageIndex] = {
+        src: images[editingImageIndex].src,
+        caption,
+        credit
+      };
+
+      closeInlineImageEditModal();
+      renderInlineImages();
+      markFormDirty();
+      showStatus('Image details saved', 'success');
+    }
+
+    // Listen for body changes to sync inline images
+    document.getElementById('body').addEventListener('blur', syncInlineImages);
+
+    async function removeFromGallery(idx) {
+      const item = gallery[idx];
+      const imgName = typeof item === 'string' ? item : item.src;
+
+      const confirmed = await showModal({
+        type: 'danger',
+        title: 'Remove Photo',
+        message: 'Remove this photo from the gallery and delete the file? This cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+      });
+
+      if (!confirmed) return;
+
+      // Delete from server
+      try {
+        const res = await fetch('/api/images/' + encodeURIComponent(imgName), { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          gallery.splice(idx, 1);
+          renderGalleryThumbnails();
+          markFormDirty();
+          markPendingChanges();
+          const gitMsg = result.gitTracked && result.gitTracked.length > 0
+            ? ' Staged for git deletion.'
+            : '';
+          showStatus('Photo deleted.' + gitMsg, 'success');
+        } else {
+          showStatus('Error deleting photo: ' + result.error, 'error');
+        }
+      } catch (err) {
+        showStatus('Error deleting photo: ' + err.message, 'error');
+      }
+    }
+
+    function openGalleryEditModal(idx) {
+      editingGalleryIndex = idx;
+      const item = gallery[idx];
+      // Handle both string and object format
+      const caption = typeof item === 'object' ? (item.caption || '') : '';
+      const credit = typeof item === 'object' ? (item.credit || '') : '';
+
+      document.getElementById('galleryCaption').value = caption;
+      document.getElementById('galleryCredit').value = credit;
+      document.getElementById('captionCount').textContent = caption.length;
+      document.getElementById('creditCount').textContent = credit.length;
+      document.getElementById('galleryEditModal').classList.add('active');
+    }
+
+    function closeGalleryEditModal() {
+      document.getElementById('galleryEditModal').classList.remove('active');
+      editingGalleryIndex = null;
+      editingImageIndex = null;
+      // Restore modal title
+      document.querySelector('#galleryEditModal .modal-title').textContent = 'Edit Photo Details';
+    }
+
+    function saveGalleryEdit() {
+      // Check if editing inline image or gallery image
+      if (editingImageIndex !== null) {
+        saveInlineImageEdit();
+        return;
+      }
+
+      if (editingGalleryIndex === null) return;
+
+      const caption = document.getElementById('galleryCaption').value.trim();
+      const credit = document.getElementById('galleryCredit').value.trim();
+      const item = gallery[editingGalleryIndex];
+
+      // Convert string to object if needed
+      const src = typeof item === 'string' ? item : item.src;
+      gallery[editingGalleryIndex] = { src, caption, credit };
+
+      closeGalleryEditModal();
+      renderGalleryThumbnails();
+      markFormDirty();
+      showStatus('Photo details saved', 'success');
+    }
+
+    // Character count listeners for gallery edit modal
+    document.getElementById('galleryCaption').addEventListener('input', (e) => {
+      document.getElementById('captionCount').textContent = e.target.value.length;
+    });
+    document.getElementById('galleryCredit').addEventListener('input', (e) => {
+      document.getElementById('creditCount').textContent = e.target.value.length;
+    });
+
+    function setupGalleryDropZone() {
+      const dropZone = document.getElementById('galleryDropZone');
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); });
+      });
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.add('dragover'));
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dropZone.addEventListener(evt, () => dropZone.classList.remove('dragover'));
+      });
+      dropZone.addEventListener('drop', e => {
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        files.forEach(file => uploadGalleryFile(file));
+      });
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status' + (type ? ' ' + type : '');
+    }
+
+    async function publishChanges() {
+      if (!pendingChanges) return;
+
+      const confirmed = await showModal({
+        type: 'success',
+        title: 'Publish All Changes',
+        message: 'This will commit all pending changes and push to the live site.',
+        confirmText: 'Publish',
+        cancelText: 'Cancel'
+      });
+
+      if (!confirmed) return;
+
+      const btn = document.getElementById('publishGlobalBtn');
+      btn.textContent = 'Publishing...';
+      btn.disabled = true;
+      showStatus('Publishing changes...', 'info');
+
+      try {
+        const res = await fetch('/api/publish-changes', { method: 'POST' });
+        const result = await res.json();
+        if (result.success) {
+          showStatus('Changes published! ' + result.message, 'success');
+          clearPendingChanges();
+        } else {
+          showStatus('Publish error: ' + result.error, 'error');
+          btn.disabled = false;
+          btn.textContent = 'Publish Changes';
+        }
+      } catch (err) {
+        showStatus('Publish error: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Publish Changes';
+      }
+    }
+
+    async function generateSynopsis() {
+      const title = document.getElementById('title').value;
+      const body = document.getElementById('body').value;
+
+      if (!title && !body) {
+        showStatus('Add a title or content first to generate a synopsis', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('generateBtn');
+      const originalText = btn.textContent;
+      btn.textContent = '⏳ Generating...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/generate-synopsis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, body })
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          document.getElementById('synopsis').value = result.synopsis;
+          markFormDirty();
+          showStatus('Synopsis generated!', 'success');
+        } else {
+          showStatus('Error: ' + result.error, 'error');
+        }
+      } catch (err) {
+        showStatus('Error generating synopsis: ' + err.message, 'error');
+      }
+
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+
+    init();
+  </script>
+</body>
+</html>
