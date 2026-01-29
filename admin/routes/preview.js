@@ -15,7 +15,7 @@ export default function createPreviewRouter(eta, imageUrlPath = '/uploads', cust
   const router = Router();
 
   router.post('/', (req, res) => {
-    const { title, synopsis, date, tags, image, imageCaption, imageCredit, author, body, showGallery } = req.body;
+    const { title, synopsis, date, tags, image, imageCaption, imageCredit, imageFocalX, imageFocalY, author, body, showGallery } = req.body;
 
     // Parse gallery from JSON string if needed
     let gallery = req.body.gallery;
@@ -52,10 +52,13 @@ export default function createPreviewRouter(eta, imageUrlPath = '/uploads', cust
         const img = typeof item === 'string' ? item : item.src;
         const caption = typeof item === 'object' ? item.caption : '';
         const credit = typeof item === 'object' ? item.credit : '';
+        const focalX = typeof item === 'object' && item.focalX !== undefined ? item.focalX : null;
+        const focalY = typeof item === 'object' && item.focalY !== undefined ? item.focalY : null;
         const lastDot = img.lastIndexOf('.');
         const thumbImg = lastDot > -1 ? img.slice(0, lastDot) + '-thumb' + img.slice(lastDot) : img + '-thumb';
+        const focalStyle = focalX !== null && focalY !== null ? ` style="object-position: ${focalX}% ${focalY}%;"` : '';
         galleryHtml += `<figure class="gallery-item" data-index="${idx}" data-src="${imageUrlPath}/${img}" data-caption="${(caption || '').replace(/"/g, '&quot;')}" data-credit="${(credit || '').replace(/"/g, '&quot;')}" onclick="openGalleryLightbox(${idx})">`;
-        galleryHtml += `<img src="${imageUrlPath}/${thumbImg}" alt="${caption || 'Gallery image'}" loading="lazy">`;
+        galleryHtml += `<img src="${imageUrlPath}/${thumbImg}" alt="${caption || 'Gallery image'}" loading="lazy"${focalStyle}>`;
         galleryHtml += '</figure>';
       });
       galleryHtml += '</div></div>';
@@ -79,6 +82,8 @@ export default function createPreviewRouter(eta, imageUrlPath = '/uploads', cust
       image,
       imageCaption,
       imageCredit,
+      imageFocalX: imageFocalX !== undefined ? parseFloat(imageFocalX) : undefined,
+      imageFocalY: imageFocalY !== undefined ? parseFloat(imageFocalY) : undefined,
       author,
       body,
       htmlBody,

@@ -19,19 +19,10 @@ router.post('/*', (req, res) => {
     const content = fs.readFileSync(fullPath, 'utf-8');
     const { frontmatter, body } = parseFrontmatterAndBody(content);
 
-    // Update status to published
+    // Update status to published, preserving all existing frontmatter fields
     const updatedContent = buildMarkdown({
-      title: frontmatter.title,
-      synopsis: frontmatter.synopsis,
-      date: frontmatter.date,
+      ...frontmatter,
       tags: Array.isArray(frontmatter.tags) ? frontmatter.tags.join(', ') : frontmatter.tags,
-      image: frontmatter.image,
-      imageCaption: frontmatter.imageCaption,
-      imageCredit: frontmatter.imageCredit,
-      author: frontmatter.author,
-      gallery: frontmatter.gallery,
-      showGallery: frontmatter.showGallery,
-      lede: frontmatter.lede,
       status: 'published'
     }, body);
     fs.writeFileSync(fullPath, updatedContent);
@@ -70,7 +61,7 @@ router.post('/*', (req, res) => {
       // No changes - clean up and return
       runGit('git checkout main');
       runGit('git branch -d ' + branchName);
-      return res.json({ success: true, message: 'Already published - no changes needed' });
+      return res.json({ success: true, branch: branchName, message: 'Already published - no changes to commit' });
     }
 
     // Commit

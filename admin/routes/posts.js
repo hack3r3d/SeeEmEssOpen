@@ -80,6 +80,8 @@ router.post('/set-lede/*', (req, res) => {
               image: fm.image,
               imageCaption: fm.imageCaption,
               imageCredit: fm.imageCredit,
+              imageFocalX: fm.imageFocalX,
+              imageFocalY: fm.imageFocalY,
               author: fm.author,
               gallery: fm.gallery,
               showGallery: fm.showGallery,
@@ -103,6 +105,8 @@ router.post('/set-lede/*', (req, res) => {
       image: frontmatter.image,
       imageCaption: frontmatter.imageCaption,
       imageCredit: frontmatter.imageCredit,
+      imageFocalX: frontmatter.imageFocalX,
+      imageFocalY: frontmatter.imageFocalY,
       author: frontmatter.author,
       gallery: frontmatter.gallery,
       showGallery: frontmatter.showGallery,
@@ -130,7 +134,7 @@ router.get('/*', (req, res) => {
 
 // Create new post
 router.post('/', (req, res) => {
-  const { title, synopsis, tags, image, imageCaption, imageCredit, body, folder, status, author, gallery, images, showGallery, lede, date: clientDate, customFields } = req.body;
+  const { title, synopsis, tags, image, imageCaption, imageCredit, imageFocalX, imageFocalY, body, folder, status, author, gallery, images, showGallery, lede, date: clientDate, customFields } = req.body;
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const date = (clientDate || new Date().toISOString()).slice(0, 10);
   const folderPath = folder || slug;
@@ -139,7 +143,7 @@ router.post('/', (req, res) => {
 
   if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
 
-  const fileContent = buildMarkdown({ title, synopsis, date, tags, image, imageCaption, imageCredit, author, gallery, images, showGallery, lede, status: status || 'draft', customFields }, body);
+  const fileContent = buildMarkdown({ title, synopsis, date, tags, image, imageCaption, imageCredit, imageFocalX, imageFocalY, author, gallery, images, showGallery, lede, status: status || 'draft', customFields }, body);
   fs.writeFileSync(filePath, fileContent);
   res.json({ success: true, path: join(folderPath, slug + '.md') });
 });
@@ -148,11 +152,11 @@ router.post('/', (req, res) => {
 router.put('/*', (req, res) => {
   const postPath = req.params[0];
   const fullPath = join(getContentDir(), postPath);
-  const { title, synopsis, tags, image, imageCaption, imageCredit, body, date: clientDate, status, author, gallery, images, showGallery, lede, customFields } = req.body;
+  const { title, synopsis, tags, image, imageCaption, imageCredit, imageFocalX, imageFocalY, body, date: clientDate, status, author, gallery, images, showGallery, lede, customFields } = req.body;
   if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Post not found' });
 
   const date = clientDate ? clientDate.slice(0, 10) : new Date().toISOString().slice(0, 10);
-  const fileContent = buildMarkdown({ title, synopsis, date, tags, image, imageCaption, imageCredit, author, gallery, images, showGallery, lede, status: status || 'draft', customFields }, body);
+  const fileContent = buildMarkdown({ title, synopsis, date, tags, image, imageCaption, imageCredit, imageFocalX, imageFocalY, author, gallery, images, showGallery, lede, status: status || 'draft', customFields }, body);
   fs.writeFileSync(fullPath, fileContent);
   res.json({ success: true });
 });

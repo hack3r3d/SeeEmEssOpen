@@ -98,6 +98,24 @@
     .status.error { background: #f8d7da; color: #721c24; display: block; }
     .status.info { background: #cce5ff; color: #004085; display: block; }
 
+    /* Focal Point Picker Styles */
+    .focal-point-picker { display: none; margin-top: 0.75rem; padding: 0.75rem; background: #f8f9fa; border-radius: 4px; }
+    .focal-point-picker.active { display: block; }
+    .focal-point-preview-container { position: relative; width: 100%; max-width: 400px; margin-bottom: 0.75rem; background: #e9ecef; border-radius: 4px; overflow: hidden; cursor: crosshair; }
+    .focal-point-preview-img { display: block; width: 100%; height: 200px; object-fit: contain; }
+    .focal-point-marker { position: absolute; width: 30px; height: 30px; margin-left: -15px; margin-top: -15px; pointer-events: none; z-index: 10; }
+    .focal-point-crosshair-h, .focal-point-crosshair-v { position: absolute; background: rgba(255, 59, 48, 0.8); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8); }
+    .focal-point-crosshair-h { width: 30px; height: 2px; top: 14px; left: 0; }
+    .focal-point-crosshair-v { width: 2px; height: 30px; top: 0; left: 14px; }
+    .focal-point-center-dot { position: absolute; width: 6px; height: 6px; top: 12px; left: 12px; background: #fff; border: 2px solid rgba(255, 59, 48, 0.8); border-radius: 50%; }
+    .focal-point-controls { display: flex; gap: 0.5rem; align-items: flex-end; }
+    .focal-point-slider-group { flex: 1; }
+    .focal-point-slider-group label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; color: #495057; }
+    .focal-point-slider { width: 100%; }
+    .focal-point-value { display: inline-block; min-width: 3ch; text-align: right; font-size: 0.75rem; color: #6c757d; margin-left: 0.25rem; }
+    .focal-point-reset { padding: 0.4rem 0.75rem; background: #6c757d; color: #fff; border: none; border-radius: 4px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
+    .focal-point-reset:hover { background: #5a6268; }
+
     /* Modal styles */
     .modal-overlay {
       position: fixed;
@@ -313,6 +331,29 @@
             <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
           </div>
           <img id="imagePreview" class="image-preview-large" style="display:none;">
+          <div class="focal-point-picker" id="focalPointPicker">
+            <div class="focal-point-preview-container" id="focalPointPreviewContainer">
+              <img id="focalPointPreviewImg" class="focal-point-preview-img" alt="Focal point preview">
+              <div class="focal-point-marker" id="focalPointMarker">
+                <div class="focal-point-crosshair-h"></div>
+                <div class="focal-point-crosshair-v"></div>
+                <div class="focal-point-center-dot"></div>
+              </div>
+            </div>
+            <div class="focal-point-controls">
+              <div class="focal-point-slider-group">
+                <label>Horizontal: <span class="focal-point-value" id="focalXValue">50</span>%</label>
+                <input type="range" class="focal-point-slider" id="focalXSlider" min="0" max="100" value="50">
+              </div>
+              <div class="focal-point-slider-group">
+                <label>Vertical: <span class="focal-point-value" id="focalYValue">50</span>%</label>
+                <input type="range" class="focal-point-slider" id="focalYSlider" min="0" max="100" value="50">
+              </div>
+              <button type="button" class="focal-point-reset" onclick="resetFocalPoint()">Reset Center</button>
+            </div>
+          </div>
+          <input type="hidden" id="imageFocalX" value="50">
+          <input type="hidden" id="imageFocalY" value="50">
           <div class="lead-photo-fields" id="leadPhotoFields" style="display:none; margin-top: 0.75rem;">
             <div class="field-row">
               <div>
@@ -413,6 +454,32 @@
             <input type="text" id="galleryCredit" maxlength="255" placeholder="Photographer or source...">
             <div class="char-count"><span id="creditCount">0</span>/255</div>
           </div>
+          <div>
+            <label>Crop Position</label>
+            <div class="focal-point-picker active">
+              <div class="focal-point-preview-container" id="galleryFocalPreviewContainer">
+                <img id="galleryFocalPreviewImg" class="focal-point-preview-img" alt="Focal point preview">
+                <div class="focal-point-marker" id="galleryFocalMarker">
+                  <div class="focal-point-crosshair-h"></div>
+                  <div class="focal-point-crosshair-v"></div>
+                  <div class="focal-point-center-dot"></div>
+                </div>
+              </div>
+              <div class="focal-point-controls">
+                <div class="focal-point-slider-group">
+                  <label>Horizontal: <span class="focal-point-value" id="galleryFocalXValue">50</span>%</label>
+                  <input type="range" class="focal-point-slider" id="galleryFocalXSlider" min="0" max="100" value="50">
+                </div>
+                <div class="focal-point-slider-group">
+                  <label>Vertical: <span class="focal-point-value" id="galleryFocalYValue">50</span>%</label>
+                  <input type="range" class="focal-point-slider" id="galleryFocalYSlider" min="0" max="100" value="50">
+                </div>
+                <button type="button" class="focal-point-reset" onclick="resetGalleryFocalPoint()">Reset Center</button>
+              </div>
+            </div>
+            <input type="hidden" id="galleryFocalX" value="50">
+            <input type="hidden" id="galleryFocalY" value="50">
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -512,6 +579,8 @@
       setupDropZone();
       setupGalleryDropZone();
       setupFormDirtyTracking();
+      initFocalPointPicker();
+      initGalleryFocalPointPicker();
     }
 
     async function loadSections() {
@@ -731,6 +800,8 @@
       document.getElementById('image').value = post.image || '';
       document.getElementById('imageCaption').value = post.imageCaption || '';
       document.getElementById('imageCredit').value = post.imageCredit || '';
+      document.getElementById('imageFocalX').value = post.imageFocalX !== undefined ? post.imageFocalX : 50;
+      document.getElementById('imageFocalY').value = post.imageFocalY !== undefined ? post.imageFocalY : 50;
       // Extract folder from path (e.g., 'heroes/alex-pretti.md' -> 'heroes')
       const pathParts = path.split('/');
       document.getElementById('folder').value = pathParts.length > 1 ? pathParts.slice(0, -1).join('/') : '';
@@ -744,6 +815,7 @@
       document.getElementById('deleteBtn').style.display = 'inline-block';
       document.getElementById('publishBtn').style.display = 'inline-block';
       previewImage();
+      updateFocalPointMarker();
       document.querySelectorAll('.post-list li').forEach(li => li.classList.toggle('active', li.dataset.path === path));
       showStatus('');
       markFormClean(false);
@@ -805,6 +877,8 @@
         image: document.getElementById('image').value,
         imageCaption: document.getElementById('imageCaption').value,
         imageCredit: document.getElementById('imageCredit').value,
+        imageFocalX: parseFloat(document.getElementById('imageFocalX').value) || 50,
+        imageFocalY: parseFloat(document.getElementById('imageFocalY').value) || 50,
         folder: document.getElementById('folder').value,
         body: document.getElementById('body').value,
         status: document.getElementById('postStatus').value,
@@ -871,6 +945,8 @@
         image: document.getElementById('image').value,
         imageCaption: document.getElementById('imageCaption').value,
         imageCredit: document.getElementById('imageCredit').value,
+        imageFocalX: document.getElementById('imageFocalX').value,
+        imageFocalY: document.getElementById('imageFocalY').value,
         body: document.getElementById('body').value,
         gallery: JSON.stringify(gallery),
         images: JSON.stringify(images),
@@ -933,6 +1009,8 @@
         image: document.getElementById('image').value,
         imageCaption: document.getElementById('imageCaption').value,
         imageCredit: document.getElementById('imageCredit').value,
+        imageFocalX: parseFloat(document.getElementById('imageFocalX').value) || 50,
+        imageFocalY: parseFloat(document.getElementById('imageFocalY').value) || 50,
         folder: document.getElementById('folder').value,
         body: document.getElementById('body').value,
         status: document.getElementById('postStatus').value,
@@ -990,14 +1068,164 @@
       const img = document.getElementById('image').value;
       const preview = document.getElementById('imagePreview');
       const fields = document.getElementById('leadPhotoFields');
+      const focalPicker = document.getElementById('focalPointPicker');
       if (img) {
         preview.src = imageUrlPath + '/' + img;
         preview.style.display = 'block';
         fields.style.display = 'block';
+        focalPicker.classList.add('active');
+        updateFocalPreviewImage();
       } else {
         preview.style.display = 'none';
         fields.style.display = 'none';
+        focalPicker.classList.remove('active');
       }
+    }
+
+    // Focal Point Functions
+    function updateFocalPreviewImage() {
+      const img = document.getElementById('image').value;
+      const previewImg = document.getElementById('focalPointPreviewImg');
+      if (img) {
+        previewImg.src = imageUrlPath + '/' + img;
+        updateFocalPointMarker();
+      }
+    }
+
+    function updateFocalPointMarker() {
+      const x = parseFloat(document.getElementById('imageFocalX').value) || 50;
+      const y = parseFloat(document.getElementById('imageFocalY').value) || 50;
+      const container = document.getElementById('focalPointPreviewContainer');
+      const marker = document.getElementById('focalPointMarker');
+
+      if (container && marker) {
+        const rect = container.getBoundingClientRect();
+        marker.style.left = (x / 100 * rect.width) + 'px';
+        marker.style.top = (y / 100 * rect.height) + 'px';
+      }
+
+      document.getElementById('focalXValue').textContent = Math.round(x);
+      document.getElementById('focalYValue').textContent = Math.round(y);
+      document.getElementById('focalXSlider').value = x;
+      document.getElementById('focalYSlider').value = y;
+    }
+
+    function updateFocalPointInputs(x, y) {
+      document.getElementById('imageFocalX').value = x;
+      document.getElementById('imageFocalY').value = y;
+      updateFocalPointMarker();
+      markFormDirty();
+    }
+
+    function resetFocalPoint() {
+      updateFocalPointInputs(50, 50);
+    }
+
+    function initFocalPointPicker() {
+      const container = document.getElementById('focalPointPreviewContainer');
+      const xSlider = document.getElementById('focalXSlider');
+      const ySlider = document.getElementById('focalYSlider');
+
+      // Click/drag on preview
+      let isDragging = false;
+      container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        updateFocalFromMouse(e);
+      });
+      container.addEventListener('mousemove', (e) => {
+        if (isDragging) updateFocalFromMouse(e);
+      });
+      document.addEventListener('mouseup', () => { isDragging = false; });
+
+      function updateFocalFromMouse(e) {
+        const rect = container.getBoundingClientRect();
+        const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+        updateFocalPointInputs(x, y);
+      }
+
+      // Sliders
+      xSlider.addEventListener('input', (e) => {
+        updateFocalPointInputs(e.target.value, document.getElementById('imageFocalY').value);
+      });
+      ySlider.addEventListener('input', (e) => {
+        updateFocalPointInputs(document.getElementById('imageFocalX').value, e.target.value);
+      });
+
+      // Update marker on window resize
+      window.addEventListener('resize', updateFocalPointMarker);
+    }
+
+    // Gallery Focal Point Functions
+    function updateGalleryFocalPreviewImage(imgSrc) {
+      const previewImg = document.getElementById('galleryFocalPreviewImg');
+      if (imgSrc) {
+        previewImg.src = imageUrlPath + '/' + imgSrc;
+        updateGalleryFocalPointMarker();
+      }
+    }
+
+    function updateGalleryFocalPointMarker() {
+      const x = parseFloat(document.getElementById('galleryFocalX').value) || 50;
+      const y = parseFloat(document.getElementById('galleryFocalY').value) || 50;
+      const container = document.getElementById('galleryFocalPreviewContainer');
+      const marker = document.getElementById('galleryFocalMarker');
+
+      if (container && marker) {
+        const rect = container.getBoundingClientRect();
+        marker.style.left = (x / 100 * rect.width) + 'px';
+        marker.style.top = (y / 100 * rect.height) + 'px';
+      }
+
+      document.getElementById('galleryFocalXValue').textContent = Math.round(x);
+      document.getElementById('galleryFocalYValue').textContent = Math.round(y);
+      document.getElementById('galleryFocalXSlider').value = x;
+      document.getElementById('galleryFocalYSlider').value = y;
+    }
+
+    function updateGalleryFocalPointInputs(x, y) {
+      document.getElementById('galleryFocalX').value = x;
+      document.getElementById('galleryFocalY').value = y;
+      updateGalleryFocalPointMarker();
+    }
+
+    function resetGalleryFocalPoint() {
+      updateGalleryFocalPointInputs(50, 50);
+    }
+
+    function initGalleryFocalPointPicker() {
+      const container = document.getElementById('galleryFocalPreviewContainer');
+      const xSlider = document.getElementById('galleryFocalXSlider');
+      const ySlider = document.getElementById('galleryFocalYSlider');
+
+      // Click/drag on preview
+      let isDragging = false;
+      container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        updateFocalFromMouse(e);
+      });
+      container.addEventListener('mousemove', (e) => {
+        if (isDragging) updateFocalFromMouse(e);
+      });
+      document.addEventListener('mouseup', () => { isDragging = false; });
+
+      function updateFocalFromMouse(e) {
+        const rect = container.getBoundingClientRect();
+        const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+        const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+        updateGalleryFocalPointInputs(x, y);
+      }
+
+      // Sliders
+      xSlider.addEventListener('input', (e) => {
+        updateGalleryFocalPointInputs(e.target.value, document.getElementById('galleryFocalY').value);
+      });
+      ySlider.addEventListener('input', (e) => {
+        updateGalleryFocalPointInputs(document.getElementById('galleryFocalX').value, e.target.value);
+      });
+
+      // Update marker on window resize
+      window.addEventListener('resize', updateGalleryFocalPointMarker);
     }
 
     function setupDropZone() {
@@ -1300,11 +1528,18 @@
       // Handle both string and object format
       const caption = typeof item === 'object' ? (item.caption || '') : '';
       const credit = typeof item === 'object' ? (item.credit || '') : '';
+      const focalX = typeof item === 'object' ? (item.focalX !== undefined ? item.focalX : 50) : 50;
+      const focalY = typeof item === 'object' ? (item.focalY !== undefined ? item.focalY : 50) : 50;
+      const imgSrc = typeof item === 'string' ? item : item.src;
 
       document.getElementById('galleryCaption').value = caption;
       document.getElementById('galleryCredit').value = credit;
       document.getElementById('captionCount').textContent = caption.length;
       document.getElementById('creditCount').textContent = credit.length;
+      document.getElementById('galleryFocalX').value = focalX;
+      document.getElementById('galleryFocalY').value = focalY;
+      updateGalleryFocalPreviewImage(imgSrc);
+      updateGalleryFocalPointMarker();
       document.getElementById('galleryEditModal').classList.add('active');
     }
 
@@ -1327,11 +1562,13 @@
 
       const caption = document.getElementById('galleryCaption').value.trim();
       const credit = document.getElementById('galleryCredit').value.trim();
+      const focalX = parseFloat(document.getElementById('galleryFocalX').value) || 50;
+      const focalY = parseFloat(document.getElementById('galleryFocalY').value) || 50;
       const item = gallery[editingGalleryIndex];
 
       // Convert string to object if needed
       const src = typeof item === 'string' ? item : item.src;
-      gallery[editingGalleryIndex] = { src, caption, credit };
+      gallery[editingGalleryIndex] = { src, caption, credit, focalX, focalY };
 
       closeGalleryEditModal();
       renderGalleryThumbnails();

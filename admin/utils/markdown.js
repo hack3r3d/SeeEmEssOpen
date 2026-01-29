@@ -107,6 +107,8 @@ export function buildMarkdown(fm, body) {
   if (fm.image) lines.push('image: ' + fm.image);
   if (fm.imageCaption) lines.push('imageCaption: "' + fm.imageCaption.replace(/"/g, '\\"') + '"');
   if (fm.imageCredit) lines.push('imageCredit: "' + fm.imageCredit.replace(/"/g, '\\"') + '"');
+  if (fm.imageFocalX !== undefined && fm.imageFocalX !== 50) lines.push('imageFocalX: ' + fm.imageFocalX);
+  if (fm.imageFocalY !== undefined && fm.imageFocalY !== 50) lines.push('imageFocalY: ' + fm.imageFocalY);
   if (fm.author) lines.push('author: "' + fm.author.replace(/"/g, '\\"') + '"');
   if (imagesArray.length > 0) {
     const imagesYaml = imagesArray.map(item => {
@@ -125,6 +127,8 @@ export function buildMarkdown(fm, body) {
       let yaml = '  - src: "' + (item.src || '') + '"';
       if (item.caption) yaml += '\n    caption: "' + item.caption.replace(/"/g, '\\"') + '"';
       if (item.credit) yaml += '\n    credit: "' + item.credit.replace(/"/g, '\\"') + '"';
+      if (item.focalX !== undefined && item.focalX !== 50) yaml += '\n    focalX: ' + item.focalX;
+      if (item.focalY !== undefined && item.focalY !== 50) yaml += '\n    focalY: ' + item.focalY;
       return yaml;
     }).join('\n');
     lines.push('gallery:\n' + galleryYaml);
