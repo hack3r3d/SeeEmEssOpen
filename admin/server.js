@@ -44,7 +44,12 @@ export function startAdminServer(options = {}) {
 
   // Static files - serve images at configured URL path
   const imageUrlPath = getImageUrlPath();
-  app.use(imageUrlPath, express.static(getPublicDir()));
+  // Use '/' as mount path if imageUrlPath is empty string
+  app.use(imageUrlPath || '/', express.static(getPublicDir()));
+  // Also serve at /uploads for backward compatibility in admin previews
+  if (imageUrlPath !== '/uploads') {
+    app.use('/uploads', express.static(getPublicDir()));
+  }
   app.use('/css', express.static(join(getCmsRoot(), 'css')));
 
   // Admin interface

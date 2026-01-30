@@ -30,9 +30,10 @@
     .section-tab { flex: 1; padding: 0.6rem 0.5rem; text-align: center; background: #f0f0f0; border: none; cursor: pointer; font-size: 0.8rem; font-weight: 600; border-radius: 4px 4px 0 0; }
     .section-tab:hover { background: #e0e0e0; }
     .section-tab.active { background: #333; color: #fff; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-    .section-header h3 { margin: 0; font-size: 0.9rem; }
-    .lede-indicator { font-size: 0.7rem; color: #004085; }
+    .search-box { position: relative; margin-bottom: 0.75rem; }
+    .search-box input { width: 100%; padding: 0.5rem 0.5rem 0.5rem 2rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; }
+    .search-box input:focus { outline: none; border-color: #333; }
+    .search-icon { position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); color: #666; font-size: 0.9rem; pointer-events: none; }
     .btn-lede { font-size: 0.65rem; padding: 2px 6px; background: #17a2b8; color: #fff; border: none; border-radius: 3px; cursor: pointer; margin-left: auto; }
     .btn-lede:hover { background: #138496; }
     .btn-lede.is-lede { background: #28a745; }
@@ -275,9 +276,9 @@
     <div class="sidebar">
       <button class="btn btn-primary" style="width:100%; margin-bottom:1rem;" onclick="newPost()">+ New Post</button>
       <div class="section-tabs" id="sectionTabs"></div>
-      <div class="section-header">
-        <h3 id="sectionTitle">Posts</h3>
-        <span class="lede-indicator" id="ledeIndicator"></span>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search posts..." oninput="filterPosts()">
       </div>
       <ul class="post-list" id="postList"></ul>
     </div>
@@ -601,8 +602,23 @@
       document.querySelectorAll('.section-tab').forEach((tab, idx) => {
         tab.classList.toggle('active', sections[idx].id === sectionId);
       });
+      document.getElementById('searchInput').value = '';
       renderPostList();
       renderCustomFields();
+    }
+
+    function filterPosts() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const listItems = document.querySelectorAll('.post-list li');
+
+      listItems.forEach(li => {
+        const title = li.querySelector('.post-title').textContent.toLowerCase();
+        if (title.includes(searchTerm)) {
+          li.style.display = '';
+        } else {
+          li.style.display = 'none';
+        }
+      });
     }
 
     function renderCustomFields() {
@@ -713,19 +729,6 @@
 
       // Filter posts by current section
       const sectionPosts = posts.filter(p => p.section === currentSection);
-
-      // Find current lede
-      const ledePost = sectionPosts.find(p => p.lede === true || p.lede === 'true');
-      const ledeIndicator = document.getElementById('ledeIndicator');
-      if (ledePost) {
-        ledeIndicator.textContent = 'Lead: ' + (ledePost.title || '').substring(0, 20) + (ledePost.title && ledePost.title.length > 20 ? '...' : '');
-      } else {
-        ledeIndicator.textContent = 'Lead: Most recent';
-      }
-
-      // Update section title
-      const section = sections.find(s => s.id === currentSection);
-      document.getElementById('sectionTitle').textContent = section ? section.name : 'Posts';
 
       sectionPosts.forEach(p => {
         const li = document.createElement('li');

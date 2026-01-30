@@ -41,9 +41,10 @@ export function createConfig(options = {}) {
   const cmsRoot = options.cmsRoot || process.cwd();
 
   // Normalize imageUrlPath - ensure it starts with / and doesn't end with /
-  let imageUrlPath = options.imageUrlPath || '/uploads';
-  if (!imageUrlPath.startsWith('/')) imageUrlPath = '/' + imageUrlPath;
-  if (imageUrlPath.endsWith('/')) imageUrlPath = imageUrlPath.slice(0, -1);
+  // Use 'imageUrlPath' in options check to allow empty string as valid value
+  let imageUrlPath = 'imageUrlPath' in options ? options.imageUrlPath : '/uploads';
+  if (imageUrlPath && !imageUrlPath.startsWith('/')) imageUrlPath = '/' + imageUrlPath;
+  if (imageUrlPath && imageUrlPath.endsWith('/')) imageUrlPath = imageUrlPath.slice(0, -1);
 
   const config = {
     CMS_ROOT: cmsRoot,
