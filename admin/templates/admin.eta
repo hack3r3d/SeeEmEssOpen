@@ -386,15 +386,16 @@
 
         <div>
           <label>Content (Markdown)</label>
+          <p style="font-size: 0.85rem; color: #666; margin: 0.25rem 0 0.5rem;">[Photo](photo.jpg){.float-left .w-1/3 .mt-4 .mb-4 .mr-4} or [Photo](photo.jpg){.float-right .w-1/3 .mt-4 .mb-4 .ml-4}</p>
           <textarea id="body" required></textarea>
         </div>
 
         <div class="image-section" id="inlineImagesSection" style="display: none;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <label>Inline Image Captions &amp; Credits</label>
+            <label>Images in Content</label>
             <button type="button" class="btn btn-secondary" onclick="syncInlineImages()" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Refresh</button>
           </div>
-          <p style="font-size: 0.85rem; color: #666; margin: 0.25rem 0 0.5rem;">Add captions and credits for images in your content</p>
+          <p style="font-size: 0.85rem; color: #666; margin: 0.25rem 0 0.5rem;">Images found in your markdown content (manage captions/credits in gallery)</p>
           <div id="inlineImagesList" class="gallery-thumbnails"></div>
         </div>
 
@@ -495,7 +496,6 @@
     let modalResolve = null;
     let formDirty = false;
     let editingGalleryIndex = null;
-    let editingImageIndex = null;
     let currentSection = 'news';
     let pendingChanges = false;
 
@@ -1430,58 +1430,15 @@
       container.innerHTML = '';
 
       images.forEach((item, idx) => {
-        const hasMetadata = item.caption || item.credit;
         const thumb = document.createElement('div');
-        thumb.className = 'gallery-thumb' + (hasMetadata ? ' has-metadata' : '');
+        thumb.className = 'gallery-thumb';
 
         thumb.innerHTML =
           '<img src="' + imageUrlPath + '/' + item.src.replace(/(\.[^.]+)$/, '-thumb$1') + '" alt="" onerror="this.onerror=null; this.src=\'' + imageUrlPath + '/' + item.src + '\'">' +
-          '<div class="gallery-thumb-actions">' +
-            '<button type="button" class="gallery-thumb-btn edit" onclick="openInlineImageEditModal(' + idx + ')" title="Edit caption/credit">✎</button>' +
-          '</div>' +
           '<div class="gallery-thumb-name">' + item.src + '</div>';
 
         container.appendChild(thumb);
       });
-    }
-
-    function openInlineImageEditModal(idx) {
-      editingImageIndex = idx;
-      const item = images[idx];
-
-      document.getElementById('galleryCaption').value = item.caption || '';
-      document.getElementById('galleryCredit').value = item.credit || '';
-      document.getElementById('captionCount').textContent = (item.caption || '').length;
-      document.getElementById('creditCount').textContent = (item.credit || '').length;
-
-      // Update modal title to indicate inline image
-      document.querySelector('#galleryEditModal .modal-title').textContent = 'Edit Inline Image Details';
-      document.getElementById('galleryEditModal').classList.add('active');
-    }
-
-    function closeInlineImageEditModal() {
-      document.getElementById('galleryEditModal').classList.remove('active');
-      editingImageIndex = null;
-      // Restore modal title
-      document.querySelector('#galleryEditModal .modal-title').textContent = 'Edit Photo Details';
-    }
-
-    function saveInlineImageEdit() {
-      if (editingImageIndex === null) return;
-
-      const caption = document.getElementById('galleryCaption').value.trim();
-      const credit = document.getElementById('galleryCredit').value.trim();
-
-      images[editingImageIndex] = {
-        src: images[editingImageIndex].src,
-        caption,
-        credit
-      };
-
-      closeInlineImageEditModal();
-      renderInlineImages();
-      markFormDirty();
-      showStatus('Image details saved', 'success');
     }
 
     // Listen for body changes to sync inline images
@@ -1546,18 +1503,11 @@
     function closeGalleryEditModal() {
       document.getElementById('galleryEditModal').classList.remove('active');
       editingGalleryIndex = null;
-      editingImageIndex = null;
       // Restore modal title
       document.querySelector('#galleryEditModal .modal-title').textContent = 'Edit Photo Details';
     }
 
     function saveGalleryEdit() {
-      // Check if editing inline image or gallery image
-      if (editingImageIndex !== null) {
-        saveInlineImageEdit();
-        return;
-      }
-
       if (editingGalleryIndex === null) return;
 
       const caption = document.getElementById('galleryCaption').value.trim();
