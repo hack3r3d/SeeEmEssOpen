@@ -70,6 +70,9 @@
     .drop-zone { border: 2px dashed #ccc; padding: 2rem; text-align: center; cursor: pointer; border-radius: 4px; margin-top: 0.5rem; }
     .drop-zone:hover, .drop-zone.dragover { border-color: #28a745; background: #f0fff0; }
     .drop-zone input { display: none; }
+    .image-preview-wrapper { position: relative; display: inline-block; }
+    .btn-remove-image { position: absolute; top: 0.5rem; right: 0.5rem; width: 32px; height: 32px; background: #dc3545; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; z-index: 10; }
+    .btn-remove-image:hover { background: #c82333; }
 
     .gallery-thumbnails { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
     .gallery-thumb { position: relative; width: 120px; }
@@ -331,7 +334,10 @@
             Drop image here or click to upload
             <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
           </div>
-          <img id="imagePreview" class="image-preview-large" style="display:none;">
+          <div class="image-preview-wrapper" id="imagePreviewWrapper" style="display:none;">
+            <button type="button" class="btn-remove-image" onclick="removeLeadPhoto()" title="Remove lead photo">&times;</button>
+            <img id="imagePreview" class="image-preview-large">
+          </div>
           <div class="focal-point-picker" id="focalPointPicker">
             <div class="focal-point-preview-container" id="focalPointPreviewContainer">
               <img id="focalPointPreviewImg" class="focal-point-preview-img" alt="Focal point preview">
@@ -837,7 +843,7 @@
       document.getElementById('folder').value = section ? section.folder : '';
       document.getElementById('deleteBtn').style.display = 'none';
       document.getElementById('publishBtn').style.display = 'none';
-      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('imagePreviewWrapper').style.display = 'none';
       document.getElementById('leadPhotoFields').style.display = 'none';
       document.getElementById('imageCaption').value = '';
       document.getElementById('imageCredit').value = '';
@@ -1069,20 +1075,31 @@
 
     function previewImage() {
       const img = document.getElementById('image').value;
+      const previewWrapper = document.getElementById('imagePreviewWrapper');
       const preview = document.getElementById('imagePreview');
       const fields = document.getElementById('leadPhotoFields');
       const focalPicker = document.getElementById('focalPointPicker');
       if (img) {
         preview.src = imageUrlPath + '/' + img;
-        preview.style.display = 'block';
+        previewWrapper.style.display = 'inline-block';
         fields.style.display = 'block';
         focalPicker.classList.add('active');
         updateFocalPreviewImage();
       } else {
-        preview.style.display = 'none';
+        previewWrapper.style.display = 'none';
         fields.style.display = 'none';
         focalPicker.classList.remove('active');
       }
+    }
+
+    function removeLeadPhoto() {
+      document.getElementById('image').value = '';
+      document.getElementById('imageCaption').value = '';
+      document.getElementById('imageCredit').value = '';
+      document.getElementById('imageFocalX').value = 50;
+      document.getElementById('imageFocalY').value = 50;
+      previewImage();
+      markFormDirty();
     }
 
     // Focal Point Functions

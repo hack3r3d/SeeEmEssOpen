@@ -55,6 +55,9 @@ router.post('/*', (req, res) => {
       });
     }
 
+    // Stage all new files/directories in public
+    runGit('git add public/');
+
     // Check if there are changes to commit
     const status = runGit('git status --porcelain');
     if (!status.trim()) {
@@ -119,6 +122,9 @@ export function publishChangesHandler(req, res) {
 
     // Add all changes in content/blog
     runGit('git add content/blog/');
+
+    // Stage all new files/directories in public
+    runGit('git add public/');
 
     // Stage any deleted images
     deletedImages.forEach(imgPath => {
