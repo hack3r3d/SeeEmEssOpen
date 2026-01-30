@@ -28,6 +28,7 @@ let currentConfig = null;
  * @param {string} [options.publicDir] Public/uploads directory path (defaults to cmsRoot/public)
  * @param {string} [options.imageUrlPath] URL path prefix for images in final site (defaults to '/uploads')
  * @param {string} [options.previewTemplate] Path to custom preview template (relative to cmsRoot)
+ * @param {string} [options.title] Title for the admin interface (defaults to 'CMS Admin')
  * @param {number} [options.port] Server port (defaults to 3000 or PORT env var)
  * @param {Array} options.sections Array of section definitions: { id, name, folder, tag, customFields? }
  *   customFields is an optional array of: { id, label, type, placeholder? }
@@ -50,6 +51,7 @@ export function createConfig(options = {}) {
     PUBLIC_DIR: options.publicDir || join(cmsRoot, 'public'),
     IMAGE_URL_PATH: imageUrlPath,
     PREVIEW_TEMPLATE: options.previewTemplate ? join(cmsRoot, options.previewTemplate) : null,
+    TITLE: options.title || 'CMS Admin',
     PORT: options.port || process.env.PORT || 3000,
     SECTIONS: options.sections || [],
     IMAGE_SIZES: options.imageSizes || DEFAULT_IMAGE_SIZES,
@@ -80,6 +82,7 @@ export const getContentDir = () => getConfig().CONTENT_DIR;
 export const getPublicDir = () => getConfig().PUBLIC_DIR;
 export const getImageUrlPath = () => getConfig().IMAGE_URL_PATH;
 export const getPreviewTemplate = () => getConfig().PREVIEW_TEMPLATE;
+export const getTitle = () => getConfig().TITLE;
 export const getPort = () => getConfig().PORT;
 export const getSections = () => getConfig().SECTIONS;
 export const getImageSizes = () => getConfig().IMAGE_SIZES;

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import { Eta } from 'eta';
 
 // Config
-import { createConfig, getConfig, getCmsRoot, getPublicDir, getImageUrlPath, getPreviewTemplate, getPort, getSections } from './config.js';
+import { createConfig, getConfig, getCmsRoot, getPublicDir, getImageUrlPath, getPreviewTemplate, getTitle, getPort, getSections } from './config.js';
 
 // Routes
 import postsRouter from './routes/posts.js';
@@ -49,7 +49,7 @@ export function startAdminServer(options = {}) {
 
   // Admin interface
   app.get('/', (req, res) => {
-    res.send(eta.render('admin', { imageUrlPath }));
+    res.send(eta.render('admin', { imageUrlPath, title: getTitle() }));
   });
 
   // API Routes

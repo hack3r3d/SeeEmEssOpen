@@ -268,7 +268,7 @@
 </head>
 <body>
   <div class="header-row">
-    <h1>CMS Admin</h1>
+    <h1><%= it.title || "CMS Admin" %></h1>
     <button class="btn-publish-global" id="publishGlobalBtn" disabled onclick="publishChanges()">Publish Changes</button>
   </div>
   <div class="container">
