@@ -23,7 +23,7 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/hack3r3d/seeemess.git"
+		"url": "git@github.com:hack3r3d/SeeEmEssOpen.git"
 	},
 	"author": "",
 	"license": "MIT",
