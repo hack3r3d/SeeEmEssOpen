@@ -72,6 +72,9 @@ router.post('/set-lede/*', (req, res) => {
           if (itemSection === section && itemFm.lede) {
             const { frontmatter: fm, body: bd } = parseFrontmatterAndBody(itemContent);
             delete fm.lede;
+            const knownKeys = ['title','synopsis','date','tags','image','imageCaption','imageCredit','imageFocalX','imageFocalY','author','gallery','images','showGallery','lede','status'];
+            const customFields = {};
+            Object.keys(fm).forEach(k => { if (!knownKeys.includes(k)) customFields[k] = fm[k]; });
             const updatedContent = buildMarkdown({
               title: fm.title,
               synopsis: fm.synopsis,
@@ -86,7 +89,8 @@ router.post('/set-lede/*', (req, res) => {
               gallery: fm.gallery,
               showGallery: fm.showGallery,
               status: fm.status,
-              lede: false
+              lede: false,
+              customFields
             }, bd);
             fs.writeFileSync(itemFullPath, updatedContent);
           }
@@ -97,6 +101,9 @@ router.post('/set-lede/*', (req, res) => {
     clearLedeInSection(getContentDir());
 
     // Set lede on the target post
+    const knownKeys = ['title','synopsis','date','tags','image','imageCaption','imageCredit','imageFocalX','imageFocalY','author','gallery','images','showGallery','lede','status'];
+    const customFields = {};
+    Object.keys(frontmatter).forEach(k => { if (!knownKeys.includes(k)) customFields[k] = frontmatter[k]; });
     const updatedContent = buildMarkdown({
       title: frontmatter.title,
       synopsis: frontmatter.synopsis,
@@ -111,7 +118,8 @@ router.post('/set-lede/*', (req, res) => {
       gallery: frontmatter.gallery,
       showGallery: frontmatter.showGallery,
       status: frontmatter.status,
-      lede: true
+      lede: true,
+      customFields
     }, body);
     fs.writeFileSync(fullPath, updatedContent);
 

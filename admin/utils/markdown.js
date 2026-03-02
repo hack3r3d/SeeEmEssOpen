@@ -137,14 +137,26 @@ export function buildMarkdown(fm, body) {
   if (fm.lede === true) lines.push('lede: true');
   if (fm.status) lines.push('status: ' + fm.status);
 
-  // Handle custom fields
+  // Handle custom fields from customFields object
   if (fm.customFields && typeof fm.customFields === 'object') {
     Object.entries(fm.customFields).forEach(([key, value]) => {
-      if (value) {
+      if (value !== undefined && value !== null && value !== '') {
         lines.push(key + ': "' + String(value).replace(/"/g, '\\"') + '"');
       }
     });
   }
+
+  // Preserve any unknown top-level frontmatter keys (e.g. location, age, dream)
+  const knownKeys = ['title','synopsis','date','tags','image','imageCaption','imageCredit','imageFocalX','imageFocalY','author','gallery','images','showGallery','lede','status','customFields'];
+  Object.entries(fm).forEach(([key, value]) => {
+    if (!knownKeys.includes(key) && value !== undefined && value !== null && value !== '') {
+      // Skip if already written via customFields
+      const alreadyWritten = fm.customFields && typeof fm.customFields === 'object' && key in fm.customFields;
+      if (!alreadyWritten) {
+        lines.push(key + ': "' + String(value).replace(/"/g, '\\"') + '"');
+      }
+    }
+  });
 
   lines.push('---');
   return lines.join('\n') + '\n\n' + body;

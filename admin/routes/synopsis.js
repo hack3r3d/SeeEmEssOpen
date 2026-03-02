@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 const router = Router();
 
-// Generate synopsis using Ollama (llama3)
+// Generate synopsis using Ollama (llama3.1)
 router.post('/', async (req, res) => {
   const { title, body } = req.body;
   if (!title && !body) {
@@ -17,7 +17,7 @@ router.post('/', async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'llama3',
+        model: 'llama3.1',
         prompt: prompt,
         stream: false
       })
