@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import { join } from 'path';
-import { getCmsRoot, getContentDir } from '../config.js';
+import { getCmsRoot, getContentDir, getDeployCommand } from '../config.js';
 import { runGit, randomWord } from '../utils/git.js';
 import { parseFrontmatterAndBody, buildMarkdown } from '../utils/markdown.js';
 import { deletedImages, clearDeletedImages } from './images.js';
@@ -58,8 +58,8 @@ router.post('/*', (req, res) => {
     // Stage all new files/directories in public
     runGit('git add public/');
 
-    // Check if there are changes to commit
-    const status = runGit('git status --porcelain');
+    // Check if there are staged changes to commit
+    const status = runGit('git diff --cached --name-only');
     if (!status.trim()) {
       // No changes - clean up and return
       runGit('git checkout main');
@@ -74,7 +74,7 @@ router.post('/*', (req, res) => {
     // Switch back to main and merge
     runGit('git checkout main');
     runGit('git merge --no-ff ' + branchName + ' -m "Merge branch ' + branchName + '"');
-    runGit('git push origin main');
+    runGit(getDeployCommand());
     runGit('git branch -d ' + branchName);
 
     res.json({ success: true, branch: branchName, message: 'Published and pushed to main' });
@@ -138,7 +138,7 @@ export function publishChangesHandler(req, res) {
 
     runGit('git checkout main');
     runGit('git merge --no-ff ' + branchName + ' -m "Merge branch ' + branchName + '"');
-    runGit('git push origin main');
+    runGit(getDeployCommand());
     runGit('git branch -d ' + branchName);
 
     clearDeletedImages();

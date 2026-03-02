@@ -35,6 +35,7 @@ let currentConfig = null;
  *   Supported types: 'text', 'textarea'
  * @param {Array} [options.imageSizes] Array of image size definitions: { suffix, width }
  * @param {Array} [options.branchWords] Array of words for git branch name generation
+ * @param {string} [options.deployCommand] Git command to run after merging to main (defaults to 'git push origin main')
  * @returns {Object} Configuration object
  */
 export function createConfig(options = {}) {
@@ -56,7 +57,8 @@ export function createConfig(options = {}) {
     PORT: options.port || process.env.PORT || 3000,
     SECTIONS: options.sections || [],
     IMAGE_SIZES: options.imageSizes || DEFAULT_IMAGE_SIZES,
-    BRANCH_WORDS: options.branchWords || DEFAULT_BRANCH_WORDS
+    BRANCH_WORDS: options.branchWords || DEFAULT_BRANCH_WORDS,
+    DEPLOY_COMMAND: options.deployCommand || 'git push origin main'
   };
 
   // Set as current config for routes to access
@@ -88,3 +90,4 @@ export const getPort = () => getConfig().PORT;
 export const getSections = () => getConfig().SECTIONS;
 export const getImageSizes = () => getConfig().IMAGE_SIZES;
 export const getBranchWords = () => getConfig().BRANCH_WORDS;
+export const getDeployCommand = () => getConfig().DEPLOY_COMMAND;
