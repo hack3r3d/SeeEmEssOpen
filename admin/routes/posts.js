@@ -2,7 +2,7 @@ import { Router } from 'express';
 import fs from 'fs';
 import { join } from 'path';
 import { getContentDir, getSections } from '../config.js';
-import { parseFrontmatter, parseFrontmatterAndBody, buildMarkdown } from '../utils/markdown.js';
+import { parseFrontmatter, parseFrontmatterAndBody, buildMarkdown, extractUnmanagedFrontmatter } from '../utils/markdown.js';
 
 const router = Router();
 
@@ -71,6 +71,7 @@ router.post('/set-lede/*', (req, res) => {
 
           if (itemSection === section && itemFm.lede) {
             const { frontmatter: fm, body: bd } = parseFrontmatterAndBody(itemContent);
+            const itemUnmanaged = extractUnmanagedFrontmatter(itemContent);
             delete fm.lede;
             const knownKeys = ['title','synopsis','date','tags','image','imageCaption','imageCredit','imageFocalX','imageFocalY','author','gallery','images','showGallery','lede','status'];
             const customFields = {};
@@ -91,7 +92,7 @@ router.post('/set-lede/*', (req, res) => {
               status: fm.status,
               lede: false,
               customFields
-            }, bd);
+            }, bd, itemUnmanaged);
             fs.writeFileSync(itemFullPath, updatedContent);
           }
         }
@@ -101,6 +102,7 @@ router.post('/set-lede/*', (req, res) => {
     clearLedeInSection(getContentDir());
 
     // Set lede on the target post
+    const unmanagedYaml = extractUnmanagedFrontmatter(content);
     const knownKeys = ['title','synopsis','date','tags','image','imageCaption','imageCredit','imageFocalX','imageFocalY','author','gallery','images','showGallery','lede','status'];
     const customFields = {};
     Object.keys(frontmatter).forEach(k => { if (!knownKeys.includes(k)) customFields[k] = frontmatter[k]; });
@@ -120,7 +122,7 @@ router.post('/set-lede/*', (req, res) => {
       status: frontmatter.status,
       lede: true,
       customFields
-    }, body);
+    }, body, unmanagedYaml);
     fs.writeFileSync(fullPath, updatedContent);
 
     res.json({ success: true, section });
@@ -163,8 +165,12 @@ router.put('/*', (req, res) => {
   const { title, synopsis, tags, image, imageCaption, imageCredit, imageFocalX, imageFocalY, body, date: clientDate, status, author, gallery, images, showGallery, lede, customFields } = req.body;
   if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Post not found' });
 
+  // Preserve frontmatter blocks the admin doesn't manage (e.g. scorecard)
+  const existingContent = fs.readFileSync(fullPath, 'utf-8');
+  const unmanagedYaml = extractUnmanagedFrontmatter(existingContent);
+
   const date = clientDate ? clientDate.slice(0, 10) : new Date().toISOString().slice(0, 10);
-  const fileContent = buildMarkdown({ title, synopsis, date, tags, image, imageCaption, imageCredit, imageFocalX, imageFocalY, author, gallery, images, showGallery, lede, status: status || 'draft', customFields }, body);
+  const fileContent = buildMarkdown({ title, synopsis, date, tags, image, imageCaption, imageCredit, imageFocalX, imageFocalY, author, gallery, images, showGallery, lede, status: status || 'draft', customFields }, body, unmanagedYaml);
   fs.writeFileSync(fullPath, fileContent);
   res.json({ success: true });
 });

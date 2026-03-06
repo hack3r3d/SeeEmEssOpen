@@ -3,7 +3,7 @@ import fs from 'fs';
 import { join } from 'path';
 import { getCmsRoot, getContentDir, getDeployCommand } from '../config.js';
 import { runGit, randomWord } from '../utils/git.js';
-import { parseFrontmatterAndBody, buildMarkdown } from '../utils/markdown.js';
+import { parseFrontmatterAndBody, buildMarkdown, extractUnmanagedFrontmatter } from '../utils/markdown.js';
 import { deletedImages, clearDeletedImages } from './images.js';
 
 const router = Router();
@@ -18,13 +18,14 @@ router.post('/*', (req, res) => {
   try {
     const content = fs.readFileSync(fullPath, 'utf-8');
     const { frontmatter, body } = parseFrontmatterAndBody(content);
+    const unmanagedYaml = extractUnmanagedFrontmatter(content);
 
     // Update status to published, preserving all existing frontmatter fields
     const updatedContent = buildMarkdown({
       ...frontmatter,
       tags: Array.isArray(frontmatter.tags) ? frontmatter.tags.join(', ') : frontmatter.tags,
       status: 'published'
-    }, body);
+    }, body, unmanagedYaml);
     fs.writeFileSync(fullPath, updatedContent);
 
     // Create branch name

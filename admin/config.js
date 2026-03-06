@@ -35,6 +35,7 @@ let currentConfig = null;
  *   Supported types: 'text', 'textarea'
  * @param {Array} [options.imageSizes] Array of image size definitions: { suffix, width }
  * @param {Array} [options.branchWords] Array of words for git branch name generation
+ * @param {string} [options.siteUrl] Base URL for story links (e.g., 'https://example.com/blog'). If set, the story URL is shown on the edit screen.
  * @param {string} [options.deployCommand] Git command to run after merging to main (defaults to 'git push origin main')
  * @returns {Object} Configuration object
  */
@@ -58,6 +59,7 @@ export function createConfig(options = {}) {
     SECTIONS: options.sections || [],
     IMAGE_SIZES: options.imageSizes || DEFAULT_IMAGE_SIZES,
     BRANCH_WORDS: options.branchWords || DEFAULT_BRANCH_WORDS,
+    SITE_URL: options.siteUrl || '',
     DEPLOY_COMMAND: options.deployCommand || 'git push origin main'
   };
 
@@ -90,4 +92,5 @@ export const getPort = () => getConfig().PORT;
 export const getSections = () => getConfig().SECTIONS;
 export const getImageSizes = () => getConfig().IMAGE_SIZES;
 export const getBranchWords = () => getConfig().BRANCH_WORDS;
+export const getSiteUrl = () => getConfig().SITE_URL;
 export const getDeployCommand = () => getConfig().DEPLOY_COMMAND;

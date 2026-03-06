@@ -89,7 +89,61 @@ export function parseFrontmatterAndBody(content) {
   return { frontmatter: parseFrontmatter(content), body: match[2].trim() };
 }
 
-export function buildMarkdown(fm, body) {
+/**
+ * Extract raw YAML blocks from frontmatter that the simple parser can't handle
+ * (e.g. deeply nested structures like scorecard). Returns them as a raw string
+ * that can be appended verbatim when rebuilding the file.
+ */
+export function extractUnmanagedFrontmatter(content) {
+  const match = content.match(/^---\n([\s\S]*?)\n---/);
+  if (!match) return '';
+
+  const managedKeys = ['title','synopsis','date','tags','image','imageCaption','imageCredit','imageFocalX','imageFocalY','author','gallery','images','showGallery','lede','status'];
+  const rawYaml = match[1];
+  const lines = rawYaml.split('\n');
+  const unmanagedBlocks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const colonIdx = line.indexOf(':');
+
+    // Skip blank lines
+    if (!line.trim()) { i++; continue; }
+
+    // Only process top-level keys (no leading whitespace)
+    if (colonIdx > 0 && !line.startsWith('  ') && !line.startsWith('\t')) {
+      const key = line.slice(0, colonIdx).trim();
+
+      if (managedKeys.includes(key)) {
+        // Skip this key and any indented continuation lines
+        i++;
+        while (i < lines.length && (lines[i].startsWith('  ') || lines[i].startsWith('\t'))) {
+          i++;
+        }
+        continue;
+      }
+
+      // Check if this unknown key has indented children (complex nested YAML)
+      const blockStart = i;
+      i++;
+      while (i < lines.length && (lines[i].startsWith('  ') || lines[i].startsWith('\t'))) {
+        i++;
+      }
+      // Only preserve as unmanaged if it has nested children
+      // (simple key: value pairs are handled by buildMarkdown's unknown-key loop)
+      if (i > blockStart + 1) {
+        unmanagedBlocks.push(lines.slice(blockStart, i).join('\n'));
+      }
+    } else {
+      i++;
+    }
+  }
+
+  return unmanagedBlocks.join('\n');
+}
+
+export function buildMarkdown(fm, body, unmanagedYaml) {
   const tagArray = typeof fm.tags === 'string'
     ? fm.tags.split(',').map(t => t.trim()).filter(Boolean)
     : (fm.tags || []);
@@ -157,6 +211,11 @@ export function buildMarkdown(fm, body) {
       }
     }
   });
+
+  // Append any unmanaged frontmatter blocks (e.g. scorecard) verbatim
+  if (unmanagedYaml) {
+    lines.push(unmanagedYaml);
+  }
 
   lines.push('---');
   return lines.join('\n') + '\n\n' + body;

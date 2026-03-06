@@ -292,6 +292,10 @@
         <input type="hidden" id="postStatus" value="draft">
         <input type="hidden" id="postLede" value="false">
         
+        <div id="storyUrlRow" style="display:none; margin-bottom:0.5rem;">
+          <a id="storyUrl" href="#" target="_blank" style="font-size:0.85rem; color:#2563eb; word-break:break-all;"></a>
+        </div>
+
         <div>
           <label>Title</label>
           <input type="text" id="title" required>
@@ -826,8 +830,25 @@
       previewImage();
       updateFocalPointMarker();
       document.querySelectorAll('.post-list li').forEach(li => li.classList.toggle('active', li.dataset.path === path));
+      showStoryUrl(path);
       showStatus('');
       markFormClean(false);
+    }
+
+    const SITE_URL = '<%= it.siteUrl || "" %>';
+
+    function showStoryUrl(path) {
+      const row = document.getElementById('storyUrlRow');
+      if (!SITE_URL || !path) {
+        row.style.display = 'none';
+        return;
+      }
+      const urlPath = path.replace(/\.md$/, '').replace(/\/index$/, '');
+      const url = SITE_URL.replace(/\/$/, '') + '/' + urlPath + '/';
+      const link = document.getElementById('storyUrl');
+      link.href = url;
+      link.textContent = url;
+      row.style.display = 'block';
     }
 
     function newPost() {
@@ -835,6 +856,7 @@
       document.getElementById('postStatus').value = 'draft';
       document.getElementById('postLede').value = 'false';
       document.getElementById('postForm').reset();
+      showStoryUrl('');
       // Set current date and time (format: YYYY-MM-DDTHH:MM)
       const now = new Date();
       document.getElementById('date').value = now.toISOString().slice(0, 16);
@@ -911,6 +933,7 @@
           markFormClean(true);
           await loadPosts();
           if (result.path) loadPost(result.path);
+          showStoryUrl(result.path || document.getElementById('postPath').value);
         } else {
           showStatus('Error: ' + (result.error || 'Unknown'), 'error');
           btn.textContent = 'Save Draft';
